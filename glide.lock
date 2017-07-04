@@ -1,0 +1,14 @@
+hash: b1c384809e951ccf313373d81cfaffbb08b484f0f5f8e256d9a35fb9b8414735
+updated: 2017-07-03T17:32:10.366602385+02:00
+imports:
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/Sirupsen/logrus
+  version: 0208149b40d863d2c1a2f8fe5753096a9cf2cc8b
+- name: github.com/spf13/cobra
+  version: 16c014f1a19d865b765b420e74508f80eb831ada
+- name: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+- name: github.com/spf13/viper
+  version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
+testImports: []
