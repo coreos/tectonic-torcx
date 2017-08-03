@@ -20,7 +20,18 @@ node.
 
 ### Open design questions:
 - What happens when an OS update fails?
+- What happens if we don't know which docker version to use?
 
 
 ## See also
 [kube-version](https://github.com/coreos/kube-version)
+
+
+# Future plans
+This tool should support three methods of operation:
+
+1: a new node is added to a kubernetes cluster
+2: an existing node has been os-updated
+3: an existing node should upgrade the k8s version
+
+It currently only supports number 1
