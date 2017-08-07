@@ -41,6 +41,12 @@ type Config struct {
 
 	// If true (by default), do an OS upgrade before proceeding
 	OSUpgrade bool
+
+	// If false (default), gpg-verify all fetched images
+	NoVerifySig bool
+
+	// The path to the gpg keyring to validate
+	GpgKeyringPath string
 }
 
 type App struct {
@@ -68,6 +74,9 @@ func ParseFlags() Config {
 	pflag.StringVar(&c.ProfileName, "torcx-profile", DEFAULT_TORCX_PROFILE, "torcx profile to create, if needed")
 	pflag.StringVar(&c.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
 
+	pflag.BoolVar(&c.NoVerifySig, "no-verify-signatures", false, "gpg-verify all downloaded addons")
+	pflag.StringVar(&c.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
+
 	vb := pflag.String("verbose", "warn", "verbosity level")
 	pflag.Lookup("verbose").NoOptDefVal = "info"
 
@@ -87,6 +96,10 @@ func ParseFlags() Config {
 
 	if c.ProfileName == "" {
 		logrus.Fatal("profile name required")
+	}
+
+	if !c.NoVerifySig && c.GpgKeyringPath == "" {
+		logrus.Fatal("--keyring required")
 	}
 
 	return c
