@@ -1,5 +1,5 @@
-hash: 5067ad608b45ca0d1f7e66b630a08f594638f14c611db7b1c64b2bfcd341b2d3
-updated: 2017-08-03T15:23:00.590812453+02:00
+hash: ecfe7037aaf7a272f533b28a9ef19f426fe29ec3a7cffcdd9e68742b16a82af0
+updated: 2017-08-07T10:29:05.479525263+02:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -105,8 +105,15 @@ imports:
   subpackages:
   - codec
 - name: golang.org/x/crypto
-  version: 1f22c0103821b9390939b6776727195525381532
+  version: 418008d6189cfc4ba88f220353d087d3ddfd7a31
   subpackages:
+  - cast5
+  - openpgp
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
   - ssh/terminal
 - name: golang.org/x/net
   version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
