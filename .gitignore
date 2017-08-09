@@ -12,4 +12,11 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
 torcx-tectonic-bootstrap
+
+/bin
+/.go
+/.push-*
+/.container-*
+/.dockerfile-*
