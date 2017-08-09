@@ -22,6 +22,27 @@ node.
 - What happens when an OS update fails?
 - What happens if we don't know which docker version to use?
 
+## Build
+`make all` to build for all supported architectures.
+
+## Execute
+It can be run as a container:
+
+```
+docker run \
+    --tmpfs /tmp \
+    -v /usr/share/torcx:/usr/share/torcx \
+    -v /var/lib/torcx:/var/lib/torcx \
+    -v /etc/torcx:/etc/torcx \
+    -v /run/torcx:/run/torcx \
+    -v /run/metadata:/run/metadata \
+    -v /etc/kubernetes:/etc/kubernetes \
+    -v /var/run/dbus:/var/run/dbus \
+    -v /usr/share/coreos/os-release:/usr/share/coreos/os-release \
+    quay.io/casey_callendrello/torcx-tectonic-bootstrap-amd64 \
+    --verbose=debug
+```
+
 
 ## See also
 [kube-version](https://github.com/coreos/kube-version)
