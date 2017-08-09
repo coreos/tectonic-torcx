@@ -15,22 +15,19 @@
 package cli
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/pkg/multicall"
+	"fmt"
+	"github.com/spf13/cobra"
 )
 
-// Init initializes the CLI environment for torcx-tectonic multicall
-func Init() error {
-	logrus.SetLevel(logrus.WarnLevel)
+var (
+	// HookPostCmd is the top-level cobra command for `torcx-tectonic-hook-post`
+	HookPostCmd = &cobra.Command{
+		Use:          "torcx-tectonic-hook-post",
+		RunE:         runHookPost,
+		SilenceUsage: true,
+	}
+)
 
-	multicall.AddCobra(BootstrapCmd.Use, BootstrapCmd)
-	multicall.AddCobra(HookPreCmd.Use, HookPreCmd)
-	multicall.AddCobra(HookPostCmd.Use, HookPostCmd)
-
-	return nil
-}
-
-// MultiExecute dispatches multicall execution
-func MultiExecute() error {
-	return multicall.MultiExecute(false)
+func runHookPost(cmd *cobra.Command, args []string) error {
+	return fmt.Errorf("unimplemented")
 }
