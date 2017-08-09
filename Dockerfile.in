@@ -2,5 +2,4 @@ FROM ARG_FROM
 
 MAINTAINER CoreOS Inc. <coreos-dev@googlegroups.com>
 
-ADD bin/ARG_ARCH/ARG_BIN  /ARG_BIN
-ENTRYPOINT ["/ARG_BIN"]
+COPY bin/ARG_ARCH/ARG_BIN        /

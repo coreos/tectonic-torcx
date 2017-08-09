@@ -30,6 +30,14 @@ if [ -z "${VERSION}" ]; then
     echo "VERSION must be set"
     exit 1
 fi
+if [ -z "${BIN}" ]; then
+    echo "BIN must be set"
+    exit 1
+fi
+if [ -z "${MULTICALLS}" ]; then
+    echo "MULTICALLS must be set"
+    exit 1
+fi
 
 export GOARCH="${ARCH}"
 export CGO_ENABLED=0
@@ -39,3 +47,6 @@ go install                                                         \
     -ldflags "-X ${PKG}/pkg/version.VERSION=${VERSION}"            \
     .
 
+for NAME in ${MULTICALLS}; do
+    cd ${GOPATH}/bin/ && ln -f -s ${BIN} ${NAME};
+done

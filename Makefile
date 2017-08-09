@@ -30,6 +30,9 @@ VERSION := $(shell git describe --tags --always --dirty)
 # This version-strategy uses a manual value to set the version string
 #VERSION := 1.2.3
 
+# Multicall binaries (symlink basenames).
+MULTICALLS := torcx-tectonic-hook-pre torcx-tectonic-hook-post
+
 ###
 ### These variables should not need tweaking.
 ###
@@ -81,7 +84,9 @@ bin/$(ARCH)/$(BIN): build-dirs
 	        ARCH=$(ARCH)                                                   \
 	        VERSION=$(VERSION)                                             \
 	        PKG=$(PKG)                                                     \
-	        ./scripts/build.sh                                               \
+	        BIN=$(BIN)                                                     \
+	        MULTICALLS=\"$(MULTICALLS)\"                                     \
+	        ./scripts/build.sh                                             \
 	    "
 
 DOTFILE_IMAGE = $(subst :,_,$(subst /,_,$(IMAGE))-$(VERSION))
@@ -89,7 +94,7 @@ DOTFILE_IMAGE = $(subst :,_,$(subst /,_,$(IMAGE))-$(VERSION))
 container: .container-$(DOTFILE_IMAGE) container-name
 .container-$(DOTFILE_IMAGE): bin/$(ARCH)/$(BIN) Dockerfile.in
 	@sed \
-	    -e 's|ARG_BIN|$(BIN)|g' \
+	    -e 's|ARG_BIN|torcx-tectonic-*|g' \
 	    -e 's|ARG_ARCH|$(ARCH)|g' \
 	    -e 's|ARG_FROM|$(BASEIMAGE)|g' \
 	    Dockerfile.in > .dockerfile-$(ARCH)
