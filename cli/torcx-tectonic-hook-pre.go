@@ -20,14 +20,14 @@ import (
 )
 
 var (
-	// HookCmd is the top-level cobra command for `torcx-tectonic-hook`
-	HookCmd = &cobra.Command{
-		Use:          "torcx-tectonic-hook",
-		RunE:         runHook,
+	// HookPreCmd is the top-level cobra command for `torcx-tectonic-hook-pre`
+	HookPreCmd = &cobra.Command{
+		Use:          "torcx-tectonic-hook-pre",
+		RunE:         runHookPre,
 		SilenceUsage: true,
 	}
 )
 
-func runHook(cmd *cobra.Command, args []string) error {
+func runHookPre(cmd *cobra.Command, args []string) error {
 	return fmt.Errorf("unimplemented")
 }
