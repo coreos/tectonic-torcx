@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/json"
@@ -32,6 +32,99 @@ type imageEntry struct {
 type imageListBox struct {
 	Kind  string       `json:"kind"`
 	Value []imageEntry `json:"value"`
+}
+
+type App struct {
+	Conf Config
+
+	// The list of OS versions for which we'll install torcx addons
+	OSVersions []string
+
+	NeedReboot bool
+}
+
+type Config struct {
+	// Path to the torcx binary
+	TorcxBin string
+
+	// The torcx profile name to create (if no others exist)
+	ProfileName string
+
+	// Path to the kubeconfig file
+	Kubeconfig string
+
+	// Path to the kube.version file
+	KubeVersionPath string
+
+	// Don't use the apiserver to determine k8s version, just use this
+	ForceKubeVersion string
+
+	// If true (by default), do an OS upgrade before proceeding
+	OSUpgrade bool
+
+	// If false (default), gpg-verify all fetched images
+	NoVerifySig bool
+
+	// The path to the gpg keyring to validate
+	GpgKeyringPath string
+}
+
+func NewApp(c Config) (*App, error) {
+	a := App{
+		Conf: c,
+	}
+
+	// Test that torcx exists
+	err := a.torcxCmd(nil, []string{"help"})
+	if err != nil {
+		return nil, errors.Wrap(err, "could not execute torcx")
+	}
+
+	return &a, nil
+}
+
+func (a *App) Run() error {
+	if a.Conf.OSUpgrade {
+		if err := a.OSUpdate(); err != nil {
+			return err
+		}
+	} else {
+		if err := a.NextOSVersion(); err != nil {
+			return err
+		}
+	}
+	if err := a.GetCurrentOSVersion(); err != nil {
+		return err
+	}
+
+	var k8sVersion string
+	if a.Conf.ForceKubeVersion != "" {
+		k8sVersion = a.Conf.ForceKubeVersion
+	} else {
+		var err error
+		k8sVersion, err = a.GetKubeVersion()
+		if err != nil {
+			return err
+		}
+	}
+
+	dockerVersion, err := DockerVersionFor(k8sVersion)
+	if err != nil {
+		return err
+	}
+
+	err = a.InstallAddon("docker", dockerVersion, a.OSVersions)
+	if err != nil {
+		return err
+	}
+
+	// Writing the kubeversion file will block our systemd unit from running
+	// so it's how we mark completion
+	err = a.WriteKubeVersion(k8sVersion)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) InstallAddon(name string, reference string, osVersions []string) error {
