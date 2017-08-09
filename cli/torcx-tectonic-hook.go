@@ -12,25 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cli
 
 import (
-	"os"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/cli"
+	"fmt"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	if err := cli.Init(); err != nil {
-		logrus.Errorln(err)
-		os.Exit(2)
+var (
+	// HookCmd is the top-level cobra command for `torcx-tectonic-hook`
+	HookCmd = &cobra.Command{
+		Use:          "torcx-tectonic-hook",
+		RunE:         runHook,
+		SilenceUsage: true,
 	}
+)
 
-	if err := cli.MultiExecute(); err != nil {
-		logrus.Errorln(err)
-		os.Exit(1)
-	}
-
-	os.Exit(0)
+func runHook(cmd *cobra.Command, args []string) error {
+	return fmt.Errorf("unimplemented")
 }

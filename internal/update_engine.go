@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"io/ioutil"
@@ -15,12 +15,13 @@ import (
 // G still has an outstanding message by declaring this global
 var statusCh chan updateengine.Status
 
-const OSRELEASE_FILE = "/usr/lib/os-release"
+// OsReleaseFile contains the default path to the os-release file
+const OsReleaseFile = "/usr/lib/os-release"
 
 // GetCurrentOSVersion adds the current OS version to the OSVersions list
 func (a *App) GetCurrentOSVersion() error {
-	logrus.Debug("reading current OS version from " + OSRELEASE_FILE)
-	osr, err := ioutil.ReadFile(OSRELEASE_FILE)
+	logrus.Debug("reading current OS version from " + OsReleaseFile)
+	osr, err := ioutil.ReadFile(OsReleaseFile)
 	if err != nil {
 		return errors.Wrap(err, "could not read os-release file")
 	}

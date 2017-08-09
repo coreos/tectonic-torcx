@@ -12,25 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cli
 
 import (
-	"os"
-
 	"github.com/Sirupsen/logrus"
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/cli"
+	"github.com/coreos-inc/torcx-tectonic-bootstrap/pkg/multicall"
 )
 
-func main() {
-	if err := cli.Init(); err != nil {
-		logrus.Errorln(err)
-		os.Exit(2)
-	}
+// Init initializes the CLI environment for torcx-tectonic multicall
+func Init() error {
+	logrus.SetLevel(logrus.WarnLevel)
 
-	if err := cli.MultiExecute(); err != nil {
-		logrus.Errorln(err)
-		os.Exit(1)
-	}
+	multicall.AddCobra(BootstrapCmd.Use, BootstrapCmd)
+	multicall.AddCobra(HookCmd.Use, HookCmd)
 
-	os.Exit(0)
+	return nil
+}
+
+// MultiExecute dispatches multicall execution
+func MultiExecute() error {
+	return multicall.MultiExecute(false)
 }
