@@ -97,16 +97,11 @@ func (a *App) Run() error {
 		return err
 	}
 
-	var k8sVersion string
-	if a.Conf.ForceKubeVersion != "" {
-		k8sVersion = a.Conf.ForceKubeVersion
-	} else {
-		var err error
-		k8sVersion, err = a.GetKubeVersion()
-		if err != nil {
-			return err
-		}
+	k8sVersion, err := a.GetKubeVersion()
+	if err != nil {
+		return err
 	}
+	logrus.Infof("running on Kubernetes version %q", k8sVersion)
 
 	dockerVersion, err := DockerVersionFor(k8sVersion)
 	if err != nil {
@@ -118,12 +113,11 @@ func (a *App) Run() error {
 		return err
 	}
 
-	// Writing the kubeversion file will block our systemd unit from running
-	// so it's how we mark completion
-	err = a.WriteKubeVersion(k8sVersion)
+	err = a.WriteKubeletEnv(kubeletEnvPath, k8sVersion)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
