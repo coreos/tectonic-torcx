@@ -11,9 +11,15 @@ import:
 - package: github.com/Sirupsen/logrus
   version: 0.11.4
 - package: github.com/coreos/container-linux-update-operator
-  version: v0.2.2
+  version: v0.3.0
+  subpackages:
+    - pkg/k8sutil
+    - pkg/updateengine
 - package: k8s.io/client-go
-  version: v2.0.0
+  version: v3.0.0
+  subpackages:
+    - kubernetes
+    - tools/clientcmd
 - package: github.com/coreos/go-semver/semver
   version: v0.2.0
 - package: golang.org/x/crypto/openpgp
