@@ -25,7 +25,7 @@ REGISTRY ?= quay.io/casey_callendrello
 ARCH ?= amd64
 
 # This version-strategy uses git tags to set the version string
-VERSION := $(shell git describe --tags --always --dirty)
+VERSION ?= $(shell git describe --tags --always --dirty)
 #
 # This version-strategy uses a manual value to set the version string
 #VERSION := 1.2.3
@@ -42,7 +42,7 @@ SRC_DIRS := .
 ALL_ARCH := amd64 arm64
 BASEIMAGE?=quay.io/lucab/torcx-userland:0.1.0
 
-IMAGE := $(REGISTRY)/$(BIN)-$(ARCH)
+IMAGE ?= $(REGISTRY)/$(BIN)-$(ARCH)
 
 BUILD_IMAGE ?= golang:1.8-stretch
 
