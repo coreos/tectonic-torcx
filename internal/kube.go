@@ -9,6 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 
+	"github.com/coreos/container-linux-update-operator/pkg/k8sutil"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -18,8 +19,6 @@ const (
 	installerEnvPath = "/etc/kubernetes/installer/kubelet.env"
 	// envVersionKey is the key for the version flag
 	envVersionKey = "KUBELET_IMAGE_TAG"
-	// kubeletEnvPath is the env file sourced by `kubelet.service`
-	kubeletEnvPath = "/etc/kubernetes/kubelet.env"
 )
 
 // WriteKubeletEnv writes the `kubelet.env` file
@@ -132,4 +131,33 @@ func readEnvFile(envPath string) (map[string]string, error) {
 	}
 
 	return env, nil
+}
+
+// WriteNodeAnnotation writes the special annotation that indicates completion
+// of the tool.
+func (a *App) WriteNodeAnnotation() error {
+	logrus.Infof("Writing node annotation %q", a.Conf.WriteNodeAnnotation)
+
+	config, err := clientcmd.BuildConfigFromFlags("", a.Conf.Kubeconfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to build kubeconfig")
+	}
+
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "failed to build kube client")
+	}
+
+	node := client.CoreV1().Nodes()
+
+	annotations := map[string]string{
+		a.Conf.WriteNodeAnnotation: "true",
+	}
+
+	err = k8sutil.SetNodeAnnotations(node, a.Conf.NodeName, annotations)
+	if err != nil {
+		return errors.Wrap(err, "unable to set node annotation")
+	}
+
+	return nil
 }

@@ -1,22 +1,45 @@
-# torcx-tectonic-bootstrap
-Small agent to bootstrap a new Tectonic node.
+# torcx-tectonic
+Configure torcx correctly for Tectonic machines.
 
 ## Background
 
-When a new tectonic node is started in the cluster, it needs to have the correct
-version of both the kubelet and corresponding docker torcx addons selected.
+Tectonic needs a specific version of Docker to be installed. Since Docker
+on Container Linux is managed by Torcx, this tool suite keeps the Torcx
+configuration in sync with the cluster environment.
 
-This is the first-boot equivalent to what the CLUO / NodeAgent do on a running
-node.
+The tool ensures that the correct verison of Docker is in the torcx store for 
+any potential OS versions. In other words, the Current and Next OS versions
+must be available in the store.
 
-## Process
+## Details
+
+The tools handle 4 cases:
+
+1. A new node is added to the cluster and needs to be configured
+2. an existing node is ready to reboot to a new OS version
+3. an existing node is ready to use a new kubelet version
+
+### 1: Bootstrap
 
 1. Force an OS update
 2. Determine the Kubelet version to install. 
 3. Compute the correct Docker version.
-4. Fetch the correct docker images
+4. Fetch and configure the correct docker torcx addons
 5. Set the correct kubelet version
 6. Enable the real kubelet service
+
+### 2: New OS
+
+1. Determine new OS version
+2. Determine docker version
+3. Fetch correct docker torcx addon
+4. GC unneeded images
+5. Add success annotation
+
+### 3: New kubelet version
+
+1. Determine new kubelet version
+2. Fetch correct docker torcx addon
 
 ### Open design questions:
 - What happens when an OS update fails?
@@ -47,13 +70,3 @@ docker run \
 
 ## See also
 [kube-version](https://github.com/coreos/kube-version)
-
-
-# Future plans
-This tool should support three methods of operation:
-
-1: a new node is added to a kubernetes cluster
-2: an existing node has been os-updated
-3: an existing node should upgrade the k8s version
-
-It currently only supports number 1

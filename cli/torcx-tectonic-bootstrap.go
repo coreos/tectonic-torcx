@@ -15,11 +15,7 @@
 package cli
 
 import (
-	"os/exec"
-
-	"github.com/Sirupsen/logrus"
-	bootstrap "github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
-	"github.com/pkg/errors"
+	"github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -35,22 +31,14 @@ var (
 		RunE:         runBootstrap,
 		SilenceUsage: true,
 	}
-	cfg     = bootstrap.Config{}
-	verbose string
 )
 
-func init() {
-	tb, _ := exec.LookPath("torcx")
+func bootstrapInit() {
+	commonFlags(BootstrapCmd.Flags())
 
-	BootstrapCmd.Flags().StringVar(&cfg.Kubeconfig, "kubeconfig", "/etc/kubernetes/kubeconfig", "path to kubeconfig")
-	BootstrapCmd.Flags().StringVar(&cfg.KubeVersionPath, "version-file", "/etc/kubernetes/kube.version", "path to kube.version file")
-	BootstrapCmd.Flags().StringVar(&cfg.TorcxBin, "torcx-bin", tb, "path to torcx")
+	// We configure the bootstrap systemd unit to only start if this file doesn't exist
+	BootstrapCmd.Flags().StringVar(&cfg.KubeletEnvPath, "kubelet-env-path", "/etc/kubernetes/kubelet.env", "path to write kube.version file")
 	BootstrapCmd.Flags().BoolVar(&cfg.OSUpgrade, "do-os-upgrade", true, "force an OS upgrade")
-	BootstrapCmd.Flags().StringVar(&cfg.ProfileName, "torcx-profile", TectonicTorcxProfile, "torcx profile to create, if needed")
-	BootstrapCmd.Flags().StringVar(&cfg.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
-	BootstrapCmd.Flags().BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "gpg-verify all downloaded addons")
-	BootstrapCmd.Flags().StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
-	BootstrapCmd.Flags().StringVar(&verbose, "verbose", "info", "verbosity level")
 }
 
 func runBootstrap(cmd *cobra.Command, args []string) error {
@@ -59,35 +47,10 @@ func runBootstrap(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	app, err := bootstrap.NewApp(conf)
+	app, err := internal.NewApp(conf)
 	if err != nil {
 		return err
 	}
 
 	return app.Run()
-}
-
-// parseFlags parses CLI options, returning a populated configuration for the bootstrap agent
-func parseFlags() (bootstrap.Config, error) {
-	zero := bootstrap.Config{}
-
-	lvl, err := logrus.ParseLevel(verbose)
-	if err != nil {
-		return zero, errors.Wrap(err, "invalid verbosity level")
-	}
-	logrus.SetLevel(lvl)
-
-	if cfg.Kubeconfig == "" && cfg.ForceKubeVersion == "" {
-		return zero, errors.New("kubeconfig required")
-	}
-
-	if cfg.ProfileName == "" {
-		return zero, errors.New("profile name required")
-	}
-
-	if !cfg.NoVerifySig && cfg.GpgKeyringPath == "" {
-		return zero, errors.New("keyring path required")
-	}
-
-	return cfg, nil
 }
