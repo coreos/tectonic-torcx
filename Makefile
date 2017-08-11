@@ -93,8 +93,8 @@ DOTFILE_IMAGE = $(subst :,_,$(subst /,_,$(IMAGE))-$(VERSION))
 
 container: .container-$(DOTFILE_IMAGE) container-name
 .container-$(DOTFILE_IMAGE): bin/$(ARCH)/$(BIN) Dockerfile.in
+	@tar -czvf bin/docker-rootfs-$(ARCH).tgz --exclude linux_$(ARCH) -C bin/$(ARCH)/ .
 	@sed \
-	    -e 's|ARG_BIN|torcx-tectonic-*|g' \
 	    -e 's|ARG_ARCH|$(ARCH)|g' \
 	    -e 's|ARG_FROM|$(BASEIMAGE)|g' \
 	    Dockerfile.in > .dockerfile-$(ARCH)
