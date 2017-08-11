@@ -39,6 +39,7 @@ docker run \
     -v /etc/kubernetes:/etc/kubernetes \
     -v /var/run/dbus:/var/run/dbus \
     -v /usr/share/coreos/os-release:/usr/share/coreos/os-release \
+    -v /usr/lib/os-release:/usr/lib/os-release \
     quay.io/casey_callendrello/torcx-tectonic-bootstrap-amd64 \
     --verbose=debug
 ```
