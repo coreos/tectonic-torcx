@@ -12,11 +12,26 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
+	"text/template"
 )
+
+const (
+	// StoreTemplate is the URL template for the default ContainerLinux torcx store
+	StoreTemplate = "https://{{.OSChannel}}.release.core-os.net/{{.OSArch}}-usr/{{.OSVersion}}/torcx/{{.AddonName}}:{{.AddonReference}}.torcx.tgz"
+)
+
+// urlParams contains required parameters for store URL rendering
+type urlParams struct {
+	OSChannel      string
+	OSArch         string
+	OSVersion      string
+	AddonName      string
+	AddonReference string
+}
 
 // FetchAddon fetches and verifies a torcx addon. It returns
 // the path to the downloaded file if successful, or error
-func (a *App) FetchAddon(name, reference, osVersion string) (string, error) {
+func (a *App) FetchAddon(name, reference, osChannel, osVersion string) (string, error) {
 	logrus.Infof("fetching addon %s:%s (%s)", name, reference, osVersion)
 
 	tmpfile, err := ioutil.TempFile("", name+":"+reference)
@@ -25,8 +40,18 @@ func (a *App) FetchAddon(name, reference, osVersion string) (string, error) {
 	}
 	defer tmpfile.Close()
 
-	url := urlFor(name, reference, osVersion, runtime.GOARCH)
-	logrus.Debugf("http get %s > %s", url, tmpfile.Name())
+	params := urlParams{
+		OSChannel:      osChannel,
+		OSVersion:      osVersion,
+		OSArch:         runtime.GOARCH,
+		AddonName:      name,
+		AddonReference: reference,
+	}
+	url, err := urlFor(a.Conf.TorcxStoreURL, params)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get addon URL")
+	}
+	logrus.Debugf("GET %s > %s", url, tmpfile.Name())
 
 	err = fetchURL(url, tmpfile)
 	if err != nil {
@@ -46,10 +71,20 @@ func (a *App) FetchAddon(name, reference, osVersion string) (string, error) {
 	return tmpfile.Name(), nil
 }
 
-func urlFor(name, reference, osVersion, arch string) string {
-	// XXX implement
-	return fmt.Sprintf("http://192.168.121.1:8000/%s:%s.torcx.tgz",
-		name, reference)
+func urlFor(urlTemplate *template.Template, params urlParams) (string, error) {
+	if urlTemplate == nil {
+		return "", errors.New("missing URL template")
+	}
+	if params.OSChannel == "" || params.OSVersion == "" || params.OSArch == "" || params.AddonName == "" || params.AddonReference == "" {
+		return "", errors.Errorf("missing URL parameter, got %#v", params)
+	}
+
+	var target bytes.Buffer
+	if err := urlTemplate.Execute(&target, params); err != nil {
+		return "", errors.Wrap(err, "failed to render URL template")
+	}
+
+	return target.String(), nil
 }
 
 // fetchURL fetches a URL to a given destination

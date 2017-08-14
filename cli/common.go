@@ -16,6 +16,7 @@ package cli
 
 import (
 	"os/exec"
+	"text/template"
 
 	"github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
 
@@ -26,8 +27,9 @@ import (
 )
 
 var (
-	cfg     = internal.Config{}
-	verbose string
+	cfg               = internal.Config{}
+	verbose           string
+	flagTorcxStoreURL string
 )
 
 // Init initializes the CLI environment for torcx-tectonic multicall
@@ -55,8 +57,10 @@ func commonFlags(f *pflag.FlagSet) {
 
 	f.StringVar(&cfg.Kubeconfig, "kubeconfig", "/etc/kubernetes/kubeconfig", "path to kubeconfig")
 	f.StringVar(&cfg.TorcxBin, "torcx-bin", tb, "path to torcx")
+	f.StringVar(&flagTorcxStoreURL, "torcx-store-url", internal.StoreTemplate, "URL (template) for torcx store")
 	f.StringVar(&cfg.ProfileName, "torcx-profile", TectonicTorcxProfile, "torcx profile to create, if needed")
 	f.StringVar(&cfg.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
+	f.StringVar(&cfg.ForceOSChannel, "force-os-channel", "", "force a specific OS channel, rather than determining from the node configuration")
 	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
 	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
 	f.StringVar(&verbose, "verbose", "info", "verbosity level")
@@ -83,6 +87,16 @@ func parseFlags() (internal.Config, error) {
 	if !cfg.NoVerifySig && cfg.GpgKeyringPath == "" {
 		return zero, errors.New("keyring path required")
 	}
+
+	if flagTorcxStoreURL == "" {
+		return zero, errors.New("empty store URL")
+	}
+
+	tmpl, err := template.New("TorcxStoreURL").Parse(flagTorcxStoreURL)
+	if err != nil {
+		return zero, errors.Wrap(err, "error parsing URL template")
+	}
+	cfg.TorcxStoreURL = tmpl
 
 	return cfg, nil
 }

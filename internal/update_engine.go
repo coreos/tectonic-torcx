@@ -15,8 +15,31 @@ import (
 // G still has an outstanding message by declaring this global
 var statusCh chan updateengine.Status
 
-// OsReleaseFile contains the default path to the os-release file
-const OsReleaseFile = "/usr/lib/os-release"
+const (
+	// OsReleaseFile contains the default path to the os-release file
+	OsReleaseFile = "/usr/lib/os-release"
+	// UpdateConfPath contains the default path to the update.conf file
+	UpdateConfPath = "/etc/coreos/update.conf"
+)
+
+// GetCurrentOSChannel reads the current channel from node `/etc/coreos/update.conf`
+func (a *App) GetCurrentOSChannel(forced string) (string, error) {
+	if forced != "" {
+		return forced, nil
+	}
+
+	key := "GROUP"
+	vars, err := readEnvFile(UpdateConfPath)
+	if err != nil {
+		return "", errors.Wrapf(err, "error reading %q", UpdateConfPath)
+	}
+	osChannel, ok := vars[key]
+	if !ok || osChannel == "" {
+		return "", errors.New("unable to detect OS channel")
+	}
+
+	return osChannel, nil
+}
 
 // GetCurrentOSVersion adds the current OS version to the OSVersions list
 func (a *App) GetCurrentOSVersion() error {
