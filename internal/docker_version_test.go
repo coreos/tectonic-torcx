@@ -48,7 +48,7 @@ func TestDockerVersionFor(t *testing.T) {
 		}
 
 		if act != tc.out {
-			t.Fatalf("DockerVersionFor(%q) expect %q act %q", tc.in, tc.out, act)
+			t.Fatalf("DockerVersionFor(%q) expected %q, got %q", tc.in, tc.out, act)
 		}
 	}
 }

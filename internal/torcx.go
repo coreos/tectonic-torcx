@@ -37,13 +37,14 @@ type imageListBox struct {
 	Value []imageEntry `json:"value"`
 }
 
-func (a *App) InstallAddon(name string, reference string, osVersions []string) error {
+// InstallAddon fetches, verify and store an addon image
+func (a *App) InstallAddon(name string, reference string, osChannel string, osVersions []string) error {
 	l := len(osVersions)
 	logrus.Infof("Installing %s:%s for %d os versions", name, reference, l)
 
 	for _, osVersion := range osVersions {
 		if !a.AddonInStore(name, reference, osVersion) {
-			path, err := a.FetchAddon(name, reference, osVersion)
+			path, err := a.FetchAddon(name, reference, osChannel, osVersion)
 			if err != nil {
 				return errors.Wrapf(err, "failed to fetch addon")
 			}

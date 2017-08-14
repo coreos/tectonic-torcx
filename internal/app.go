@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"text/template"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 )
@@ -18,6 +20,9 @@ type Config struct {
 	// Path to the torcx binary
 	TorcxBin string
 
+	// Templated URL to torcx store
+	TorcxStoreURL *template.Template
+
 	// The torcx profile name to create (if no others exist)
 	ProfileName string
 
@@ -29,6 +34,9 @@ type Config struct {
 
 	// Don't use the apiserver to determine k8s version, just use this
 	ForceKubeVersion string
+
+	// Don't use node configuration to determine OS channel, just use this
+	ForceOSChannel string
 
 	// If true, do an OS upgrade before proceeding
 	OSUpgrade bool
@@ -82,6 +90,11 @@ func (a *App) Run() error {
 		return err
 	}
 
+	osChannel, err := a.GetCurrentOSChannel(a.Conf.ForceOSChannel)
+	if err != nil {
+		return err
+	}
+
 	k8sVersion, err := a.GetKubeVersion()
 	if err != nil {
 		return err
@@ -93,7 +106,7 @@ func (a *App) Run() error {
 		return err
 	}
 
-	err = a.InstallAddon("docker", dockerVersion, a.OSVersions)
+	err = a.InstallAddon("docker", dockerVersion, osChannel, a.OSVersions)
 	if err != nil {
 		return err
 	}
