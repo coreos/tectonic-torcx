@@ -37,7 +37,7 @@ MULTICALLS := torcx-tectonic-hook-pre
 ### These variables should not need tweaking.
 ###
 
-SRC_DIRS := .
+SRC_DIRS := cli internal pkg
 
 ALL_ARCH := amd64 arm64
 BASEIMAGE?=quay.io/lucab/torcx-userland:0.1.1
