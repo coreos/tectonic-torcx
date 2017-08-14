@@ -54,9 +54,11 @@ It can be run as a container:
 ```
 docker run \
     --tmpfs /tmp \
+    -v /usr/share/ca-certificates/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt \
     -v /usr/share/torcx:/usr/share/torcx \
     -v /var/lib/torcx:/var/lib/torcx \
     -v /etc/torcx:/etc/torcx \
+    -v /etc/coreos:/etc/coreos \
     -v /run/torcx:/run/torcx \
     -v /run/metadata:/run/metadata \
     -v /etc/kubernetes:/etc/kubernetes \
