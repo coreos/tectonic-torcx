@@ -40,7 +40,7 @@ MULTICALLS := torcx-tectonic-hook-pre torcx-tectonic-hook-post
 SRC_DIRS := .
 
 ALL_ARCH := amd64 arm64
-BASEIMAGE?=quay.io/lucab/torcx-userland:0.1.0
+BASEIMAGE?=quay.io/lucab/torcx-userland:0.1.1
 
 IMAGE ?= $(REGISTRY)/$(BIN)-$(ARCH)
 
