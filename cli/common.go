@@ -15,8 +15,19 @@
 package cli
 
 import (
+	"os/exec"
+
+	"github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/coreos-inc/torcx-tectonic-bootstrap/pkg/multicall"
+	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
+)
+
+var (
+	cfg     = internal.Config{}
+	verbose string
 )
 
 // Init initializes the CLI environment for torcx-tectonic multicall
@@ -25,7 +36,6 @@ func Init() error {
 
 	multicall.AddCobra(BootstrapCmd.Use, BootstrapCmd)
 	multicall.AddCobra(HookPreCmd.Use, HookPreCmd)
-	multicall.AddCobra(HookPostCmd.Use, HookPostCmd)
 
 	return nil
 }
@@ -33,4 +43,46 @@ func Init() error {
 // MultiExecute dispatches multicall execution
 func MultiExecute() error {
 	return multicall.MultiExecute(false)
+}
+
+func init() {
+	bootstrapInit()
+	hookPreInit()
+}
+
+func commonFlags(f *pflag.FlagSet) {
+	tb, _ := exec.LookPath("torcx")
+
+	f.StringVar(&cfg.Kubeconfig, "kubeconfig", "/etc/kubernetes/kubeconfig", "path to kubeconfig")
+	f.StringVar(&cfg.TorcxBin, "torcx-bin", tb, "path to torcx")
+	f.StringVar(&cfg.ProfileName, "torcx-profile", TectonicTorcxProfile, "torcx profile to create, if needed")
+	f.StringVar(&cfg.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
+	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
+	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
+	f.StringVar(&verbose, "verbose", "info", "verbosity level")
+}
+
+// parseFlags parses CLI options, returning a populated configuration for the bootstrap agent
+func parseFlags() (internal.Config, error) {
+	zero := internal.Config{}
+
+	lvl, err := logrus.ParseLevel(verbose)
+	if err != nil {
+		return zero, errors.Wrap(err, "invalid verbosity level")
+	}
+	logrus.SetLevel(lvl)
+
+	if cfg.Kubeconfig == "" && cfg.ForceKubeVersion == "" {
+		return zero, errors.New("kubeconfig required")
+	}
+
+	if cfg.ProfileName == "" {
+		return zero, errors.New("profile name required")
+	}
+
+	if !cfg.NoVerifySig && cfg.GpgKeyringPath == "" {
+		return zero, errors.New("keyring path required")
+	}
+
+	return cfg, nil
 }

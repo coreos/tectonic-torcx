@@ -12,17 +12,17 @@ func TestDockerVersionFor(t *testing.T) {
 	}{
 		{
 			"v1.6.7+coreos.0",
-			"1.12.6",
+			"1.12",
 			false,
 		},
 		{
 			"v1.5.6+coreos.0",
-			"1.11.2",
+			"1.11",
 			false,
 		},
 		{
 			"v1.7.0+coreos.0",
-			"1.12.6",
+			"1.12",
 			false,
 		},
 		{

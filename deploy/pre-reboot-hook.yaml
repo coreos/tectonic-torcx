@@ -1,0 +1,87 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: container-linux-torcx-pre-hook
+  namespace: tectonic-system
+spec:
+  template:
+    metadata:
+      labels:
+        app: container-linux-torcx-pre-hook
+    spec:
+      nodeSelector:
+        container-linux-update.v1.coreos.com/before-reboot: "true"
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: update-agent
+        image: quay.io/casey_callendrello/torcx-tectonic-bootstrap-amd64:9668a35-dirty
+        command:
+        - "/torcx-tectonic-hook-pre"
+        - "--verbose=debug"
+        - "--node-annotation=container-linux-update.v1.coreos.com/torcx-pre"
+        - "--sleep=604800" # sleep for a week after success; the operator will deschedule us
+        volumeMounts:
+          - mountPath: /usr/share/torcx
+            name: usr-share-torcx
+          - mountPath: /var/lib/torcx
+            name: var-lib-torcx
+          - mountPath: /etc/torcx
+            name: etc-torcx
+          - mountPath: /run/torcx
+            name: run-torcx
+          - mountPath: /run/metadata
+            name: run-metadata
+          - mountPath: /etc/kubernetes
+            name: etc-kubernetes
+          - mountPath: /var/run/dbus
+            name: var-run-dbus
+          - mountPath: /usr/share/coreos/os-release
+            name: usr-share-coreos-os-release
+          - mountPath: /usr/lib/os-release
+            name: usr-lib-os-release
+          - mountPath: /etc/coreos
+            name: etc-coreos
+          - mountPath: /etc/ssl/certs/ca-certificates.crt
+            name: ca-certificates
+        env:
+        - name: NODE
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      volumes:
+      - name: usr-share-torcx
+        hostPath:
+          path: /usr/share/torcx
+      - name: var-lib-torcx
+        hostPath:
+          path: /var/lib/torcx
+      - name: etc-torcx
+        hostPath:
+          path: /etc/torcx
+      - name: run-torcx
+        hostPath:
+          path: /run/torcx
+      - name: run-metadata
+        hostPath:
+          path: /run/metadata
+      - name: etc-kubernetes
+        hostPath:
+          path: /etc/kubernetes
+      - name: var-run-dbus
+        hostPath:
+          path: /var/run/dbus
+      - name: usr-share-coreos-os-release
+        hostPath:
+          path: /usr/share/coreos/os-release
+      - name: usr-lib-os-release
+        hostPath:
+          path: /usr/lib/os-release
+      - name: etc-coreos
+        hostPath:
+          path: /etc/coreos
+      - name: ca-certificates
+        hostPath:
+          path: /usr/share/ca-certificates/ca-certificates.crt

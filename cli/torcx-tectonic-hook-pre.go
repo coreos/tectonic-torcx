@@ -15,7 +15,12 @@
 package cli
 
 import (
-	"fmt"
+	"errors"
+	"os"
+	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -26,8 +31,47 @@ var (
 		RunE:         runHookPre,
 		SilenceUsage: true,
 	}
+	sleep int
 )
 
+func hookPreInit() {
+	commonFlags(HookPreCmd.Flags())
+
+	HookPreCmd.Flags().StringVar(&cfg.WriteNodeAnnotation, "node-annotation", "", "Node annotation to write after successful operation")
+	HookPreCmd.Flags().StringVar(&cfg.NodeName, "node-name", "", "Our node name")
+	HookPreCmd.Flags().IntVar(&sleep, "sleep", 0, "sleep N seconds after success")
+}
+
 func runHookPre(cmd *cobra.Command, args []string) error {
-	return fmt.Errorf("unimplemented")
+	conf, err := parseFlags()
+	if err != nil {
+		return err
+	}
+
+	// The kubernetes downward api passes values via environment vars
+	if v := os.Getenv("NODE"); v != "" && conf.NodeName == "" {
+		conf.NodeName = v
+	}
+
+	if conf.WriteNodeAnnotation != "" && conf.NodeName == "" {
+		return errors.New("--node-annotation requires --node-name or env-var NODE")
+	}
+
+	app, err := internal.NewApp(conf)
+	if err != nil {
+		return err
+	}
+
+	err = app.Run()
+	if err != nil {
+		return err
+	}
+
+	if sleep > 0 {
+		logrus.Info("Pre-reboot hook complete, sleeping forever")
+		for {
+			time.Sleep(time.Duration(sleep) * time.Second)
+		}
+	}
+	return nil
 }

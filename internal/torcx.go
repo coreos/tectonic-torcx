@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +12,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 )
+
+const TORCX_STORE = "/var/lib/torcx/store"
 
 type profileList struct {
 	LowerProfileNames  []string `json:"lower_profile_names"`
@@ -32,93 +35,6 @@ type imageEntry struct {
 type imageListBox struct {
 	Kind  string       `json:"kind"`
 	Value []imageEntry `json:"value"`
-}
-
-type App struct {
-	Conf Config
-
-	// The list of OS versions for which we'll install torcx addons
-	OSVersions []string
-
-	NeedReboot bool
-}
-
-type Config struct {
-	// Path to the torcx binary
-	TorcxBin string
-
-	// The torcx profile name to create (if no others exist)
-	ProfileName string
-
-	// Path to the kubeconfig file
-	Kubeconfig string
-
-	// Path to the kube.version file
-	KubeVersionPath string
-
-	// Don't use the apiserver to determine k8s version, just use this
-	ForceKubeVersion string
-
-	// If true (by default), do an OS upgrade before proceeding
-	OSUpgrade bool
-
-	// If false (default), gpg-verify all fetched images
-	NoVerifySig bool
-
-	// The path to the gpg keyring to validate
-	GpgKeyringPath string
-}
-
-func NewApp(c Config) (*App, error) {
-	a := App{
-		Conf: c,
-	}
-
-	// Test that torcx exists
-	err := a.torcxCmd(nil, []string{"help"})
-	if err != nil {
-		return nil, errors.Wrap(err, "could not execute torcx")
-	}
-
-	return &a, nil
-}
-
-func (a *App) Run() error {
-	if a.Conf.OSUpgrade {
-		if err := a.OSUpdate(); err != nil {
-			return err
-		}
-	} else {
-		if err := a.NextOSVersion(); err != nil {
-			return err
-		}
-	}
-	if err := a.GetCurrentOSVersion(); err != nil {
-		return err
-	}
-
-	k8sVersion, err := a.GetKubeVersion()
-	if err != nil {
-		return err
-	}
-	logrus.Infof("running on Kubernetes version %q", k8sVersion)
-
-	dockerVersion, err := DockerVersionFor(k8sVersion)
-	if err != nil {
-		return err
-	}
-
-	err = a.InstallAddon("docker", dockerVersion, a.OSVersions)
-	if err != nil {
-		return err
-	}
-
-	err = a.WriteKubeletEnv(kubeletEnvPath, k8sVersion)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (a *App) InstallAddon(name string, reference string, osVersions []string) error {
@@ -145,6 +61,12 @@ func (a *App) InstallAddon(name string, reference string, osVersions []string) e
 	err := a.UseAddon(name, reference)
 	if err != nil {
 		return errors.Wrapf(err, "failed to enable addon")
+	}
+
+	// GC
+	err = a.TorcxGC()
+	if err != nil {
+		logrus.Error("failed to GC old torx stores (continuing): ", err)
 	}
 
 	return nil
@@ -179,14 +101,14 @@ func (a *App) moveToStore(path, name, reference, osVersion string) error {
 	defer srcfd.Close()
 
 	var destPath string
-	if err := os.MkdirAll(filepath.Join("/var/lib/torcx/store", osVersion), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(a.Conf.torcxStoreDir, osVersion), 0755); err != nil {
 		return err
 	}
 	if osVersion != "" {
-		destPath = fmt.Sprintf("/var/lib/torcx/store/%s/%s:%s.torcx.tgz",
-			osVersion, name, reference)
+		destPath = fmt.Sprintf("%s/%s/%s:%s.torcx.tgz",
+			a.Conf.torcxStoreDir, osVersion, name, reference)
 	} else {
-		destPath = fmt.Sprintf("/var/lib/torcx/store/%s:%s.torcx.tgz", name, reference)
+		destPath = fmt.Sprintf("%s/%s:%s.torcx.tgz", a.Conf.torcxStoreDir, name, reference)
 	}
 	destfd, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
@@ -225,6 +147,43 @@ func (a *App) UseAddon(name string, reference string) error {
 	if err != nil {
 		return errors.Wrap(err, "could not set-next profile")
 	}
+	return nil
+}
+
+// TorcxGC removes versioned stores that we know we won't need.
+// As a safety mechanism, this won't do anything unless we are keeping at least
+// 2 OS versions.
+func (a *App) TorcxGC() error {
+	if len(a.OSVersions) < 2 {
+		logrus.Debug("Skipping TorcxGC; need at least 2 active OSVersions")
+		return nil
+	}
+
+	// List the user store
+	entries, err := ioutil.ReadDir(a.Conf.torcxStoreDir)
+	if err != nil {
+		return errors.Wrap(err, "failed to list torcx store")
+	}
+
+	// Each torcx store directory holds addons and os version sub-stores
+	// Remove all unwanted stores
+L:
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		for _, keep := range a.OSVersions {
+			if entry.Name() == keep {
+				continue L
+			}
+		}
+		p := filepath.Join(a.Conf.torcxStoreDir, entry.Name())
+		logrus.Debugf("Removing unneeded torcx store directory %s", p)
+		if err := os.RemoveAll(p); err != nil {
+			return errors.Wrap(err, "failed to remove old torcx addons")
+		}
+	}
+
 	return nil
 }
 

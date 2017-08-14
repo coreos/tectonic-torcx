@@ -31,7 +31,7 @@ VERSION ?= $(shell git describe --tags --always --dirty)
 #VERSION := 1.2.3
 
 # Multicall binaries (symlink basenames).
-MULTICALLS := torcx-tectonic-hook-pre torcx-tectonic-hook-post
+MULTICALLS := torcx-tectonic-hook-pre
 
 ###
 ### These variables should not need tweaking.
