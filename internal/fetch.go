@@ -94,6 +94,9 @@ func fetchURL(url string, dst io.WriteCloser) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return errors.Errorf("failed to download %q: %s", url, resp.Status)
+	}
 
 	_, err = io.Copy(dst, resp.Body)
 	if err != nil {
