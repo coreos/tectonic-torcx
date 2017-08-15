@@ -8,6 +8,17 @@ import (
 	"testing"
 )
 
+func TestFilterOsVersions(t *testing.T) {
+	osv := []string{"1437.0.0", "1451.0.2", "1451.2.0", "1492.4.0"}
+
+	expected := []string{"1451.2.0", "1492.4.0"}
+	actual := FilterOsVersions("1451.2.0", osv)
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("expected versions %q, got %q", expected, actual)
+	}
+}
+
 func TestTorcxGC(t *testing.T) {
 	storeDir, err := ioutil.TempDir("", ".torcx-test")
 	if err != nil {

@@ -24,37 +24,41 @@ spec:
         - "--node-annotation=container-linux-update.v1.coreos.com/torcx-pre"
         - "--sleep=604800" # sleep for a week after success; the operator will deschedule us
         volumeMounts:
-          - mountPath: /usr/share/torcx
-            name: usr-share-torcx
+          - mountPath: /usr/share
+            name: usr-share
+            readOnly: true
           - mountPath: /var/lib/torcx
             name: var-lib-torcx
           - mountPath: /etc/torcx
             name: etc-torcx
           - mountPath: /run/torcx
             name: run-torcx
+            readOnly: true
           - mountPath: /run/metadata
             name: run-metadata
+            readOnly: true
           - mountPath: /etc/kubernetes
             name: etc-kubernetes
           - mountPath: /var/run/dbus
             name: var-run-dbus
-          - mountPath: /usr/share/coreos/os-release
-            name: usr-share-coreos-os-release
           - mountPath: /usr/lib/os-release
             name: usr-lib-os-release
+            readOnly: true
           - mountPath: /etc/coreos
             name: etc-coreos
+            readOnly: true
           - mountPath: /etc/ssl/certs/ca-certificates.crt
             name: ca-certificates
+            readOnly: true
         env:
         - name: NODE
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
       volumes:
-      - name: usr-share-torcx
+      - name: usr-share
         hostPath:
-          path: /usr/share/torcx
+          path: /usr/share
       - name: var-lib-torcx
         hostPath:
           path: /var/lib/torcx
@@ -73,9 +77,6 @@ spec:
       - name: var-run-dbus
         hostPath:
           path: /var/run/dbus
-      - name: usr-share-coreos-os-release
-        hostPath:
-          path: /usr/share/coreos/os-release
       - name: usr-lib-os-release
         hostPath:
           path: /usr/lib/os-release
