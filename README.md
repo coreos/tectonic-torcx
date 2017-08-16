@@ -54,17 +54,16 @@ It can be run as a container:
 ```
 docker run \
     --tmpfs /tmp \
-    -v /usr/share/ca-certificates/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt \
-    -v /usr/share/torcx:/usr/share/torcx \
+    -v /usr/share:/usr/share:ro \
+    -v /usr/lib/os-release:/usr/lib/os-release:ro \
+    -v /usr/share/ca-certificates/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \
     -v /var/lib/torcx:/var/lib/torcx \
-    -v /etc/torcx:/etc/torcx \
-    -v /etc/coreos:/etc/coreos \
-    -v /run/torcx:/run/torcx \
-    -v /run/metadata:/run/metadata \
-    -v /etc/kubernetes:/etc/kubernetes \
+    -v /run/torcx:/run/torcx:ro \
+    -v /run/metadata:/run/metadata:ro \
     -v /var/run/dbus:/var/run/dbus \
-    -v /usr/share/coreos/os-release:/usr/share/coreos/os-release \
-    -v /usr/lib/os-release:/usr/lib/os-release \
+    -v /etc/coreos:/etc/coreos:ro \
+    -v /etc/torcx:/etc/torcx \
+    -v /etc/kubernetes:/etc/kubernetes \
     quay.io/casey_callendrello/torcx-tectonic-bootstrap-amd64 \
     --verbose=debug
 ```

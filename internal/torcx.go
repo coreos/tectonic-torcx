@@ -10,10 +10,14 @@ import (
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
 )
 
 const TORCX_STORE = "/var/lib/torcx/store"
+
+// The first CL version with docker supplied by torcx
+const CL_VER_DOCKER_TORCX = "1451.2.0"
 
 type profileList struct {
 	LowerProfileNames  []string `json:"lower_profile_names"`
@@ -37,9 +41,45 @@ type imageListBox struct {
 	Value []imageEntry `json:"value"`
 }
 
+// FilterOSVersions removes versions of Container Linux that don't use torcx.
+// Docker was first added to CL in 1451.2.0
+func FilterOsVersions(minVersion string, versions []string) []string {
+	out := []string{}
+
+	minVer, _ := semver.NewVersion(minVersion)
+	if minVer == nil {
+		return versions
+	}
+
+	for _, vers := range versions {
+		ver, err := semver.NewVersion(vers)
+		if err != nil {
+			logrus.Debugf("Couldn't parse CL version %s, skipping", vers)
+			continue
+		}
+
+		if ver.LessThan(*minVer) {
+			logrus.Debugf("CL version %s too old; skipping", vers)
+			continue
+		}
+
+		out = append(out, vers)
+	}
+
+	return out
+}
+
 // InstallAddon fetches, verify and store an addon image
-func (a *App) InstallAddon(name string, reference string, osChannel string, osVersions []string) error {
+func (a *App) InstallAddon(name string, reference string, osChannel string, osVersions []string, minOsVersion string) error {
+	osVersions = FilterOsVersions(minOsVersion, osVersions)
+
 	l := len(osVersions)
+	if l == 0 {
+		// This is not an error condition - it means the package is provided
+		// by the OS directly.
+		logrus.Infof("Not installing %s:%s - no valid OS versions", name, reference)
+		return nil
+	}
 	logrus.Infof("Installing %s:%s for %d os versions", name, reference, l)
 
 	for _, osVersion := range osVersions {
