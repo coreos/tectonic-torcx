@@ -106,7 +106,7 @@ func (a *App) Run() error {
 		return err
 	}
 
-	err = a.InstallAddon("docker", dockerVersion, osChannel, a.OSVersions, CL_VER_DOCKER_TORCX)
+	err = a.InstallAddon("docker", dockerVersion, osChannel, a.OSVersions, MinimumRemoteDocker)
 	if err != nil {
 		return err
 	}

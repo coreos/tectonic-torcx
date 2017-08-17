@@ -16,8 +16,8 @@ import (
 
 const TORCX_STORE = "/var/lib/torcx/store"
 
-// The first CL version with docker supplied by torcx
-const CL_VER_DOCKER_TORCX = "1451.2.0"
+// MinimumRemoteDocker is the first CL bucket with published docker addons
+const MinimumRemoteDocker = "1520.0.0"
 
 type profileList struct {
 	LowerProfileNames  []string `json:"lower_profile_names"`
@@ -41,8 +41,7 @@ type imageListBox struct {
 	Value []imageEntry `json:"value"`
 }
 
-// FilterOSVersions removes versions of Container Linux that don't use torcx.
-// Docker was first added to CL in 1451.2.0
+// FilterOsVersions removes versions of Container Linux that don't use torcx.
 func FilterOsVersions(minVersion string, versions []string) []string {
 	out := []string{}
 
