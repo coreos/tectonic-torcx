@@ -104,7 +104,7 @@ func (a *App) InstallAddon(name string, reference string, osChannel string, osVe
 	}
 
 	// GC
-	err = a.TorcxGC()
+	err = a.TorcxGC(osVersions)
 	if err != nil {
 		logrus.Error("failed to GC old torx stores (continuing): ", err)
 	}
@@ -193,8 +193,8 @@ func (a *App) UseAddon(name string, reference string) error {
 // TorcxGC removes versioned stores that we know we won't need.
 // As a safety mechanism, this won't do anything unless we are keeping at least
 // 2 OS versions.
-func (a *App) TorcxGC() error {
-	if len(a.OSVersions) < 2 {
+func (a *App) TorcxGC(osVersions []string) error {
+	if len(osVersions) < 2 {
 		logrus.Debug("Skipping TorcxGC; need at least 2 active OSVersions")
 		return nil
 	}
@@ -212,7 +212,7 @@ L:
 		if !entry.IsDir() {
 			continue
 		}
-		for _, keep := range a.OSVersions {
+		for _, keep := range osVersions {
 			if entry.Name() == keep {
 				continue L
 			}
