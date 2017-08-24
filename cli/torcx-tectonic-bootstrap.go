@@ -52,5 +52,5 @@ func runBootstrap(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return app.Run()
+	return app.Bootstrap()
 }

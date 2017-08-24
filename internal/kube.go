@@ -60,15 +60,16 @@ func (a *App) GetKubeVersion() (string, error) {
 	if apiErr == nil {
 		return apiVersion, nil
 	}
-	logrus.Debug("failed attempt to determine Kubernetes APIServer version: ", apiErr)
+	logrus.Warn("failed attempt to determine Kubernetes APIServer version: ", apiErr)
 
-	pathVersion, pathErr := a.versionFromPath(installerEnvPath, envVersionKey)
+	pathVersion, pathErr := versionFromPath(installerEnvPath, envVersionKey)
 	if pathErr == nil {
+		logrus.Warn("Falling back to installer-provided kubernetes version")
 		// This accomodates for charset constraints in docker tags (for the hyperkube image)
 		version := strings.Replace(pathVersion, "_", "+", -1)
 		return version, nil
 	}
-	logrus.Debug("failed attempt to determine Kubernetes installer version: ", pathErr)
+	logrus.Warn("failed attempt to determine Kubernetes installer version: ", pathErr)
 
 	return "", errors.New("unable to determine cluster version")
 }
@@ -96,7 +97,7 @@ func (a *App) versionFromAPIServer() (string, error) {
 }
 
 // versionFromPath reads Kubernetes version from a file
-func (a *App) versionFromPath(path string, envKey string) (string, error) {
+func versionFromPath(path string, envKey string) (string, error) {
 	flags, err := readEnvFile(path)
 	if err != nil {
 		return "", err

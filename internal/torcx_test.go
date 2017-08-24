@@ -42,9 +42,9 @@ func TestTorcxGC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	a.OSVersions = []string{"v2", "v3"}
+	OSVersions := []string{"v2", "v3"}
 
-	err = a.TorcxGC()
+	err = a.TorcxGC(OSVersions)
 	if err != nil {
 		t.Fatal(err)
 	}

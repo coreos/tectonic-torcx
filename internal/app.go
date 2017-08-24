@@ -10,8 +10,14 @@ import (
 type App struct {
 	Conf Config
 
-	// The list of OS versions for which we'll install torcx addons
-	OSVersions []string
+	OSChannel string
+
+	CurrentOSVersion string
+	NextOSVersion    string
+
+	K8sVersion string
+
+	DockerVersion string
 
 	NeedReboot bool
 }
@@ -76,46 +82,99 @@ func NewApp(c Config) (*App, error) {
 	return &a, nil
 }
 
-func (a *App) Run() error {
-	if a.Conf.OSUpgrade {
-		if err := a.OSUpdate(); err != nil {
-			return err
-		}
+// Gather collects the common system state - this has no side effects
+func (a *App) GatherState() error {
+	var err error
+
+	a.CurrentOSVersion, err = GetCurrentOSVersion()
+	if err != nil {
+		return err
+	}
+
+	if a.Conf.ForceOSChannel != "" {
+		a.OSChannel = a.Conf.ForceOSChannel
 	} else {
-		if err := a.NextOSVersion(); err != nil {
+		a.OSChannel, err = GetCurrentOSChannel()
+		if err != nil {
 			return err
 		}
 	}
-	if err := a.GetCurrentOSVersion(); err != nil {
-		return err
-	}
 
-	osChannel, err := a.GetCurrentOSChannel(a.Conf.ForceOSChannel)
+	a.K8sVersion, err = a.GetKubeVersion()
 	if err != nil {
 		return err
 	}
+	logrus.Infof("running on Kubernetes version %q", a.K8sVersion)
 
-	k8sVersion, err := a.GetKubeVersion()
+	a.DockerVersion, err = DockerVersionFor(a.K8sVersion)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("running on Kubernetes version %q", k8sVersion)
+	logrus.Infof("want docker version %s", a.DockerVersion)
 
-	dockerVersion, err := DockerVersionFor(k8sVersion)
-	if err != nil {
+	return nil
+}
+
+// Bootstrap runs the steps necessary for bootstrapping a new node:
+// - do an OS upgrade
+// - install torcx packages
+// - write kubelet.env
+func (a *App) Bootstrap() error {
+	if err := a.GatherState(); err != nil {
 		return err
 	}
 
-	err = a.InstallAddon("docker", dockerVersion, osChannel, a.OSVersions, MinimumRemoteDocker)
+	if err := a.OSUpdate(); err != nil {
+		return err
+	}
+
+	osVersions := []string{}
+	if a.CurrentOSVersion != "" {
+		osVersions = append(osVersions, a.CurrentOSVersion)
+	}
+	if a.NextOSVersion != "" {
+		osVersions = append(osVersions, a.NextOSVersion)
+	}
+
+	err := a.InstallAddon("docker", a.DockerVersion, a.OSChannel, osVersions, MinimumRemoteDocker)
 	if err != nil {
 		return err
 	}
 
 	if a.Conf.KubeletEnvPath != "" {
-		err = a.WriteKubeletEnv(a.Conf.KubeletEnvPath, k8sVersion)
+		err = a.WriteKubeletEnv(a.Conf.KubeletEnvPath, a.K8sVersion)
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// UpdateHook runs the steps expected for a pre-reboot hook
+// - Install torcx package
+// - gc if possible
+// - write "hook successful" annotation
+func (a *App) UpdateHook() error {
+	if err := a.GatherState(); err != nil {
+		return err
+	}
+
+	if err := a.GetNextOSVersion(); err != nil {
+		return err
+	}
+
+	osVersions := []string{}
+	if a.CurrentOSVersion != "" {
+		osVersions = append(osVersions, a.CurrentOSVersion)
+	}
+	if a.NextOSVersion != "" {
+		osVersions = append(osVersions, a.NextOSVersion)
+	}
+
+	err := a.InstallAddon("docker", a.DockerVersion, a.OSChannel, osVersions, MinimumRemoteDocker)
+	if err != nil {
+		return err
 	}
 
 	if a.Conf.WriteNodeAnnotation != "" {

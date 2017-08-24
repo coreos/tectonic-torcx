@@ -62,7 +62,7 @@ func runHookPre(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = app.Run()
+	err = app.UpdateHook()
 	if err != nil {
 		return err
 	}

@@ -23,11 +23,7 @@ const (
 )
 
 // GetCurrentOSChannel reads the current channel from node `/etc/coreos/update.conf`
-func (a *App) GetCurrentOSChannel(forced string) (string, error) {
-	if forced != "" {
-		return forced, nil
-	}
-
+func GetCurrentOSChannel() (string, error) {
 	key := "GROUP"
 	vars, err := readEnvFile(UpdateConfPath)
 	if err != nil {
@@ -37,26 +33,22 @@ func (a *App) GetCurrentOSChannel(forced string) (string, error) {
 	if !ok || osChannel == "" {
 		return "", errors.New("unable to detect OS channel")
 	}
-
 	return osChannel, nil
 }
 
 // GetCurrentOSVersion adds the current OS version to the OSVersions list
-func (a *App) GetCurrentOSVersion() error {
+func GetCurrentOSVersion() (string, error) {
 	logrus.Debug("reading current OS version from " + OsReleaseFile)
 	osr, err := ioutil.ReadFile(OsReleaseFile)
 	if err != nil {
-		return errors.Wrap(err, "could not read os-release file")
+		return "", errors.Wrap(err, "could not read os-release file")
 	}
 
 	version := parseOSVersion(string(osr))
 	if version == "" {
-		return errors.New("invalid os-release file")
+		return "", errors.New("invalid os-release file")
 	}
-
-	a.OSVersions = append(a.OSVersions, version)
-
-	return nil
+	return version, nil
 }
 
 func parseOSVersion(releaseInfo string) string {
@@ -71,7 +63,7 @@ func parseOSVersion(releaseInfo string) string {
 
 // NextOSVersion gets the coming OS version from update_engine
 // without changing anything.
-func (a *App) NextOSVersion() error {
+func (a *App) GetNextOSVersion() error {
 	logrus.Debug("Requesting next OS version")
 	ue, err := updateengine.New()
 	if err != nil {
@@ -86,7 +78,7 @@ func (a *App) NextOSVersion() error {
 
 	if status.CurrentOperation == updateengine.UpdateStatusUpdatedNeedReboot {
 		logrus.Infof("Next OS version is %s", status.NewVersion)
-		a.OSVersions = append(a.OSVersions, status.NewVersion)
+		a.NextOSVersion = status.NewVersion
 	} else {
 		logrus.Debugf("update_engine status is %s, cannot determine next version", status.CurrentOperation)
 	}
@@ -166,7 +158,7 @@ loop:
 		case updateengine.UpdateStatusUpdatedNeedReboot:
 			// Update complete, reboot time
 			logrus.Info("Update successful! Next version is ", status.NewVersion)
-			a.OSVersions = append(a.OSVersions, status.NewVersion)
+			a.NextOSVersion = status.NewVersion
 			a.NeedReboot = true
 			break loop
 
