@@ -22,5 +22,9 @@ import:
     - tools/clientcmd
 - package: github.com/coreos/go-semver/semver
   version: v0.2.0
+- package: github.com/coreos/go-systemd
+  version: v15
+  subpackages:
+    - dbus
 - package: golang.org/x/crypto/openpgp
   version: 418008d6189cfc4ba88f220353d087d3ddfd7a31

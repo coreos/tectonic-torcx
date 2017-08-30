@@ -1,5 +1,5 @@
-hash: 2c3ddf27b25543592e486631c79f33b4d869bb29113306e12633b2c1b65880ed
-updated: 2017-08-10T11:43:33.962182163+02:00
+hash: ac2426b11838f878ebd26454bd9991f5b8d61cbc89c9bb1e47a4237eb74793eb
+updated: 2017-08-25T12:50:24.307490851Z
 imports:
 - name: github.com/coreos/container-linux-update-operator
   version: 453fe3b01f43c3008a15e2d87b1d16a989180218
@@ -10,6 +10,10 @@ imports:
   version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
   subpackages:
   - semver
+- name: github.com/coreos/go-systemd
+  version: d2196463941895ee908e13531a23a39feb9e1243
+  subpackages:
+  - dbus
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:

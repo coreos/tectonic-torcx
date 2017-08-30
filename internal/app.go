@@ -4,6 +4,7 @@ import (
 	"text/template"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/coreos/go-systemd/dbus"
 	"github.com/pkg/errors"
 )
 
@@ -82,7 +83,7 @@ func NewApp(c Config) (*App, error) {
 	return &a, nil
 }
 
-// Gather collects the common system state - this has no side effects
+// GatherState collects the common system state - this has no side effects
 func (a *App) GatherState() error {
 	var err error
 
@@ -119,7 +120,14 @@ func (a *App) GatherState() error {
 // - do an OS upgrade
 // - install torcx packages
 // - write kubelet.env
+// - (if required) reboot the system
 func (a *App) Bootstrap() error {
+	dbusConn, err := dbus.New()
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to login1 dbus")
+	}
+	defer dbusConn.Close()
+
 	if err := a.GatherState(); err != nil {
 		return err
 	}
@@ -136,8 +144,7 @@ func (a *App) Bootstrap() error {
 		osVersions = append(osVersions, a.NextOSVersion)
 	}
 
-	err := a.InstallAddon("docker", a.DockerVersion, a.OSChannel, osVersions, MinimumRemoteDocker)
-	if err != nil {
+	if err := a.InstallAddon("docker", a.DockerVersion, a.OSChannel, osVersions, MinimumRemoteDocker); err != nil {
 		return err
 	}
 
@@ -146,6 +153,17 @@ func (a *App) Bootstrap() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if a.NeedReboot {
+		// We trigger a reboot and block here, waiting for init to kill us.
+		c := make(chan string)
+		logrus.Info("node updated, triggering reboot to apply changes")
+		_, err := dbusConn.StartUnit("reboot.target", "isolate", c)
+		if err != nil {
+			return errors.Wrapf(err, "failed to reboot")
+		}
+		return errors.Errorf("reboot result: %q", <-c)
 	}
 
 	return nil
