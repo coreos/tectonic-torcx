@@ -28,3 +28,5 @@ import:
     - dbus
 - package: golang.org/x/crypto/openpgp
   version: 418008d6189cfc4ba88f220353d087d3ddfd7a31
+- package: gopkg.in/yaml.v2
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
