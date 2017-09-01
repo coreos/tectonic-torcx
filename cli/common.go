@@ -63,6 +63,7 @@ func commonFlags(f *pflag.FlagSet) {
 	f.StringVar(&cfg.ForceOSChannel, "force-os-channel", "", "force a specific OS channel, rather than determining from the node configuration")
 	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
 	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
+	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "/versions.yml", "path to the version manifest file")
 	f.StringVar(&verbose, "verbose", "info", "verbosity level")
 }
 
