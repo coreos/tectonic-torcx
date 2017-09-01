@@ -1,4 +1,4 @@
-package: github.com/coreos-inc/torcx-tectonic-bootstrap
+package: github.com/coreos/tectonic-torcx/internal
 import:
 - package: github.com/pkg/errors
   version: v0.8.0

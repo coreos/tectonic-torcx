@@ -15,7 +15,7 @@
 package cli
 
 import (
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
+	"github.com/coreos/tectonic-torcx/internal"
 	"github.com/spf13/cobra"
 )
 

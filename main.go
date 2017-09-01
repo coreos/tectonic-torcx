@@ -18,7 +18,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/cli"
+	"github.com/coreos/tectonic-torcx/cli"
 )
 
 func main() {
