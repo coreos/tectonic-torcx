@@ -18,7 +18,8 @@ type App struct {
 
 	K8sVersion string
 
-	DockerVersion string
+	// Preferred docker versions
+	DockerVersions []string
 
 	NeedReboot bool
 }
@@ -63,6 +64,9 @@ type Config struct {
 
 	// The torcx store path - this is only used for testing
 	torcxStoreDir string
+
+	// The path to the version manifest
+	VersionManifestPath string
 }
 
 func NewApp(c Config) (*App, error) {
@@ -107,11 +111,11 @@ func (a *App) GatherState() error {
 	}
 	logrus.Infof("running on Kubernetes version %q", a.K8sVersion)
 
-	a.DockerVersion, err = DockerVersionFor(a.K8sVersion)
+	a.DockerVersions, err = a.VersionFor("docker", a.K8sVersion)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("want docker version %s", a.DockerVersion)
+	logrus.Infof("want docker versions %v", a.DockerVersions)
 
 	return nil
 }
@@ -144,7 +148,9 @@ func (a *App) Bootstrap() error {
 		osVersions = append(osVersions, a.NextOSVersion)
 	}
 
-	if err := a.InstallAddon("docker", a.DockerVersion, a.OSChannel, osVersions, MinimumRemoteDocker); err != nil {
+	// TODO(cdc) When we have the list of available packages for an OS version,
+	// pick the best one.
+	if err := a.InstallAddon("docker", a.DockerVersions[0], a.OSChannel, osVersions, MinimumRemoteDocker); err != nil {
 		return err
 	}
 
@@ -190,7 +196,7 @@ func (a *App) UpdateHook() error {
 		osVersions = append(osVersions, a.NextOSVersion)
 	}
 
-	err := a.InstallAddon("docker", a.DockerVersion, a.OSChannel, osVersions, MinimumRemoteDocker)
+	err := a.InstallAddon("docker", a.DockerVersions[0], a.OSChannel, osVersions, MinimumRemoteDocker)
 	if err != nil {
 		return err
 	}

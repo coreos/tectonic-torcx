@@ -1,0 +1,11 @@
+kind: VersionManifestV1
+versions:
+  k8s:
+    1.6:
+        docker: [ "1.12"]
+    1.7:
+        docker: [ "1.12" ]
+    1.8:
+        # As per k8s issue 42926, 1.11, 1.12, 1.13, and 17.03 are supported
+        # see https://github.com/kubernetes/kubernetes/issues/42926#issuecomment-325733231
+        docker: [ "1.13", "1.12"]
