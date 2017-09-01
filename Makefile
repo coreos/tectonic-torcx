@@ -13,13 +13,13 @@
 # limitations under the License.
 
 # The binary to build (just the basename).
-BIN := torcx-tectonic-bootstrap
+BIN := tectonic-torcx
 
 # This repo's root import path (under GOPATH).
-PKG := github.com/coreos-inc/torcx-tectonic-bootstrap
+PKG := github.com/coreos/tectonic-torcx
 
 # Where to push the docker image.
-REGISTRY ?= quay.io/casey_callendrello
+REGISTRY ?= quay.io/coreos
 
 # Which architecture to build - see $(ALL_ARCH) for options.
 ARCH ?= amd64

@@ -18,10 +18,10 @@ import (
 	"os/exec"
 	"text/template"
 
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/internal"
+	"github.com/coreos/tectonic-torcx/internal"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/coreos-inc/torcx-tectonic-bootstrap/pkg/multicall"
+	"github.com/coreos/tectonic-torcx/pkg/multicall"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )

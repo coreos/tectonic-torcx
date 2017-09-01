@@ -4,8 +4,8 @@
 #
 set -e
 
-if ! [[ "$PWD" = "$GOPATH/src/github.com/coreos-inc/torcx-tectonic-bootstrap" ]]; then
-  echo "must be run from \$GOPATH/src/github.com/coreos-inc/torcx-tectonic-bootstrap"
+if ! [[ "$PWD" = "$GOPATH/src/github.com/coreos/tectonic-torcx" ]]; then
+  echo "must be run from \$GOPATH/src/github.com/coreos/tectonic-torcx"
   exit 1
 fi
 
