@@ -57,8 +57,9 @@ docker run \
     -v /usr/lib/os-release:/usr/lib/os-release:ro \
     -v /usr/share/ca-certificates/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \
     -v /var/lib/torcx:/var/lib/torcx \
-    -v /run/torcx:/run/torcx:ro \
     -v /run/metadata:/run/metadata:ro \
+    -v /run/systemd:/run/systemd \
+    -v /run/torcx:/run/torcx:ro \
     -v /var/run/dbus:/var/run/dbus \
     -v /etc/coreos:/etc/coreos:ro \
     -v /etc/torcx:/etc/torcx \
