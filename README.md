@@ -1,55 +1,54 @@
-# torcx-tectonic
-Configure torcx correctly for Tectonic machines.
+# tectonic-torcx
+
+A self-contained node-helper to automatically operate [torcx][torcx] on [Tectonic][tectonic] machines.
+
+[torcx]: https://github.com/coreos/torcx 
+[tectonic]: https://coreos.com/tectonic
 
 ## Background
 
 Tectonic needs a specific version of Docker to be installed. Since Docker
-on Container Linux is managed by Torcx, this tool suite keeps the Torcx
+on Container Linux is managed by torcx, this tool suite keeps the torcx
 configuration in sync with the cluster environment.
 
 The tool ensures that the correct verison of Docker is in the torcx store for 
-any potential OS versions. In other words, the Current and Next OS versions
-must be available in the store.
+any potential OS versions. In other words, it populates torcx stores for Current
+and Next OS versions.
 
 ## Details
 
-The tools handle 4 cases:
+This software handles two main cases:
 
-1. A new node is added to the cluster and needs to be configured
-2. an existing node is ready to reboot to a new OS version
-3. an existing node is ready to use a new kubelet version
+1. A new node is added to the cluster and needs to be configured (bootstrap)
+1. An existing node is ready to reboot to a new OS version (pre-reboot hook)
 
 ### 1: Bootstrap
 
-1. Force an OS update
-2. Determine the Kubelet version to install. 
-3. Compute the correct Docker version.
-4. Fetch and configure the correct docker torcx addons
-5. Set the correct kubelet version
-6. Enable the real kubelet service
+1. Trigger an OS update (optional, default true)
+1. Determine the Kubelet version to install
+1. Determine the correct Docker version
+1. Fetch and configure Docker torcx addons and profile
+1. Set the correct kubelet version
+1. Trigger node reboot (if needed by updates)
 
-### 2: New OS
+### 2: OS upgrade on a node
 
+1. Watch for pre-reboot annotation 
 1. Determine new OS version
-2. Determine docker version
-3. Fetch correct docker torcx addon
-4. GC unneeded images
-5. Add success annotation
+1. Determine docker version
+1. Fetch correct docker torcx addon
+1. GC unneeded images
+1. Add success annotation
 
-### 3: New kubelet version
-
-1. Determine new kubelet version
-2. Fetch correct docker torcx addon
-
-### Open design questions:
-- What happens when an OS update fails?
-- What happens if we don't know which docker version to use?
+In both cases, it can also determine/update kubelet based on cluster status.
 
 ## Build
+
 `make all` to build for all supported architectures.
 
 ## Execute
-It can be run as a container:
+
+This helper is normally run within a container:
 
 ```
 docker run \
@@ -64,10 +63,13 @@ docker run \
     -v /etc/coreos:/etc/coreos:ro \
     -v /etc/torcx:/etc/torcx \
     -v /etc/kubernetes:/etc/kubernetes \
-    quay.io/casey_callendrello/torcx-tectonic-bootstrap-amd64 \
+    quay.io/coreos/tectonic-torcx:latest-dev \
     --verbose=debug
 ```
 
 
 ## See also
-[kube-version](https://github.com/coreos/kube-version)
+
+ * [bootkube](https://github.com/kubernetes-incubator/bootkube)
+ * [kube-version](https://github.com/coreos/kube-version)
+ * [tectonic-installer](https://github.com/coreos/tectonic-installer)
