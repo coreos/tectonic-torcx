@@ -25,9 +25,9 @@ const (
 )
 
 var (
-	// BootstrapCmd is the top-level cobra command for `torcx-tectonic-bootstrap`
+	// BootstrapCmd is the top-level cobra command for `tectonic-torcx-bootstrap`
 	BootstrapCmd = &cobra.Command{
-		Use:          "torcx-tectonic-bootstrap",
+		Use:          "tectonic-torcx-bootstrap",
 		RunE:         runBootstrap,
 		SilenceUsage: true,
 	}

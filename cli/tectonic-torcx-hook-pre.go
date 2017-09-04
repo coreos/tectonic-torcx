@@ -25,9 +25,9 @@ import (
 )
 
 var (
-	// HookPreCmd is the top-level cobra command for `torcx-tectonic-hook-pre`
+	// HookPreCmd is the top-level cobra command for `tectonic-torcx-hook-pre`
 	HookPreCmd = &cobra.Command{
-		Use:          "torcx-tectonic-hook-pre",
+		Use:          "tectonic-torcx-hook-pre",
 		RunE:         runHookPre,
 		SilenceUsage: true,
 	}
