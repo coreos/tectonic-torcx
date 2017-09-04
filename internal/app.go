@@ -150,8 +150,14 @@ func (a *App) Bootstrap() error {
 		return err
 	}
 
-	if err := a.OSUpdate(); err != nil {
-		return err
+	if a.Conf.OSUpgrade {
+		if err := a.OSUpdate(); err != nil {
+			return err
+		}
+	} else {
+		if err := a.GetNextOSVersion(); err != nil {
+			return err
+		}
 	}
 
 	osVersions := []string{}

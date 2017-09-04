@@ -17,9 +17,9 @@ spec:
         effect: NoSchedule
       containers:
       - name: update-agent
-        image: quay.io/casey_callendrello/torcx-tectonic-bootstrap-amd64:9668a35-dirty
+        image: quay.io/coreos/tectonic-torcx-amd64:latest
         command:
-        - "/torcx-tectonic-hook-pre"
+        - "/tectonic-torcx-hook-pre"
         - "--verbose=debug"
         - "--node-annotation=container-linux-update.v1.coreos.com/torcx-pre"
         - "--sleep=604800" # sleep for a week after success; the operator will deschedule us

@@ -32,7 +32,7 @@ var (
 	flagTorcxStoreURL string
 )
 
-// Init initializes the CLI environment for torcx-tectonic multicall
+// Init initializes the CLI environment for tectonic-torcx multicall
 func Init() error {
 	logrus.SetLevel(logrus.WarnLevel)
 
@@ -63,7 +63,7 @@ func commonFlags(f *pflag.FlagSet) {
 	f.StringVar(&cfg.ForceOSChannel, "force-os-channel", "", "force a specific OS channel, rather than determining from the node configuration")
 	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
 	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
-	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "/versions.yml", "path to the version manifest file")
+	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "/versions.yaml", "path to the version manifest file")
 	f.StringVar(&verbose, "verbose", "info", "verbosity level")
 }
 
@@ -98,6 +98,10 @@ func parseFlags() (internal.Config, error) {
 		return zero, errors.Wrap(err, "error parsing URL template")
 	}
 	cfg.TorcxStoreURL = tmpl
+
+	if cfg.VersionManifestPath == "" {
+		return zero, errors.New("version-manifest required")
+	}
 
 	return cfg, nil
 }
