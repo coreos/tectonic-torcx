@@ -1,0 +1,22 @@
+dist: trusty
+sudo: required
+
+language: go
+go_import_path: github.com/coreos/tectonic-torcx
+go:
+  - 1.8
+  - 1.9
+
+env:
+  - >
+    ARCH="amd64"
+    BIN="tectonic-torcx"
+    MULTICALLS="tectonic-torcx-bootstrap tectonic-torcx-hook-pre"
+    PKG="github.com/coreos/tectonic-torcx"
+    VERSION="travis-dev"
+    BUILDTAGS=""
+    SRC_DIRS="cli pkg internal"
+
+script:
+- ./scripts/build.sh
+- ./scripts/test.sh ${SRC_DIRS}
