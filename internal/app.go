@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// App contains all the runtime state in a single, mutable place.
 type App struct {
 	Conf Config
 
@@ -35,7 +36,10 @@ type App struct {
 	// Preferred docker versions
 	DockerVersions []string
 
-	NeedReboot bool
+	// Whether a node reboot is required to finalize a docker upgrade.
+	DockerRequiresReboot bool
+	// Whether a node reboot is required to finalize an OS upgrade.
+	OSRequiresReboot bool
 }
 
 type Config struct {
@@ -181,7 +185,16 @@ func (a *App) Bootstrap() error {
 		}
 	}
 
-	if a.NeedReboot {
+	if a.DockerRequiresReboot || a.OSRequiresReboot {
+		// Docker does not support version downgrades, so we need to
+		// clean its datadir before reboot.
+		if a.DockerRequiresReboot {
+			logrus.Debug("docker change detected, cleaning datadir before reboot")
+			if err := a.EnableDockerCleanupUnit(dbusConn); err != nil {
+				logrus.Infof("unable to install docker cleanup unit: %s", err)
+			}
+		}
+
 		// We trigger a reboot and block here, waiting for init to kill us.
 		c := make(chan string)
 		logrus.Info("node updated, triggering reboot to apply changes")

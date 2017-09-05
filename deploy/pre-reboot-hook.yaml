@@ -31,11 +31,13 @@ spec:
             name: var-lib-torcx
           - mountPath: /etc/torcx
             name: etc-torcx
-          - mountPath: /run/torcx
-            name: run-torcx
-            readOnly: true
           - mountPath: /run/metadata
             name: run-metadata
+            readOnly: true
+          - mountPath: /run/systemd
+            name: run-systemd
+          - mountPath: /run/torcx
+            name: run-torcx
             readOnly: true
           - mountPath: /etc/kubernetes
             name: etc-kubernetes
@@ -65,12 +67,15 @@ spec:
       - name: etc-torcx
         hostPath:
           path: /etc/torcx
-      - name: run-torcx
-        hostPath:
-          path: /run/torcx
       - name: run-metadata
         hostPath:
           path: /run/metadata
+      - name: run-systemd
+        hostPath:
+          path: /run/systemd
+      - name: run-torcx
+        hostPath:
+          path: /run/torcx
       - name: etc-kubernetes
         hostPath:
           path: /etc/kubernetes

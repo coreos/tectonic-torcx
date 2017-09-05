@@ -116,6 +116,7 @@ func (a *App) InstallAddon(name string, reference string, osChannel string, osVe
 	if err != nil {
 		return errors.Wrapf(err, "failed to enable addon")
 	}
+	a.DockerRequiresReboot = true
 
 	// GC
 	err = a.TorcxGC(osVersions)

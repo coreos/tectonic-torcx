@@ -173,7 +173,7 @@ loop:
 			// Update complete, reboot time
 			logrus.Info("Update successful! Next version is ", status.NewVersion)
 			a.NextOSVersion = status.NewVersion
-			a.NeedReboot = true
+			a.OSRequiresReboot = true
 			break loop
 
 		case updateengine.UpdateStatusIdle:
