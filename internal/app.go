@@ -85,6 +85,9 @@ type Config struct {
 
 	// The path to the version manifest
 	VersionManifestPath string
+
+	// Whether to skip torcx addon fetching and profile setup
+	SkipTorcxSetup bool
 }
 
 func NewApp(c Config) (*App, error) {
@@ -172,10 +175,12 @@ func (a *App) Bootstrap() error {
 		osVersions = append(osVersions, a.NextOSVersion)
 	}
 
-	// TODO(cdc) When we have the list of available packages for an OS version,
-	// pick the best one.
-	if err := a.InstallAddon("docker", a.DockerVersions[0], a.OSChannel, osVersions, MinimumRemoteDocker); err != nil {
-		return err
+	if !a.Conf.SkipTorcxSetup {
+		// TODO(cdc) When we have the list of available packages for an OS version,
+		// pick the best one.
+		if err := a.InstallAddon("docker", a.DockerVersions[0], a.OSChannel, osVersions, MinimumRemoteDocker); err != nil {
+			return err
+		}
 	}
 
 	if a.Conf.KubeletEnvPath != "" {
