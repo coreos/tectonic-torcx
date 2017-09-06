@@ -1,5 +1,5 @@
-hash: 05428a5c596d5f6ffd4236d0421c2c25426e052d64a85309d0d2e761e77558ee
-updated: 2017-09-01T19:40:22.842025548+02:00
+hash: c864ad700c8b433cf91194585a40ecc2493d1ffd4e66cfaf69089b4dd7bc3e85
+updated: 2017-09-06T14:56:21.463008927+02:00
 imports:
 - name: github.com/coreos/container-linux-update-operator
   version: 453fe3b01f43c3008a15e2d87b1d16a989180218
@@ -63,6 +63,8 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/opencontainers/go-digest
+  version: aa2ec055abd10d26d539eb630a92241b781ce4bc
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/PuerkitoBio/purell
