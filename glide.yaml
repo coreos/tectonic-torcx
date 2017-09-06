@@ -32,3 +32,8 @@ import:
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 - package: github.com/opencontainers/go-digest
   version: v1.0.0-rc0
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+    - assert
