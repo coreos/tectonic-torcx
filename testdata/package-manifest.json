@@ -1,0 +1,36 @@
+{
+  "kind": "torcx-package-list-v0",
+  "value": {
+    "packages": [
+      {
+        "name": "docker",
+        "defaultVersion": "1.12",
+        "versions": [
+          {
+            "version": "1.12",
+            "hash": "sha512-0e3e75234abc68f4378a86b3f4b32a198ba301845b0cd6e50106e874345700cc6663a86c1ea125dc5e92be17c98f9a0f85ca9d5f595db2012f7cc3571945c123",
+            "sourcePackage": "app-torcx/docker-1.12.6-r1",
+            "locations": [
+              {
+                "path": "/usr/share/torcx/store/docker:1.12.torcx.tgz"
+              },
+              {
+                "url": "https://tectonic-torcx.release.core-os.net/pkgs/amd64-usr/docker/784802.../docker:1.12.torcx.tgz"
+              }
+            ]
+          },
+          {
+            "version": "17.06",
+            "sourcePackage": "app-torcx/docker-17.06.1",
+            "hash": "sha512-fb608f...",
+            "locations": [
+              {
+                "url": "https://tectonic-torcx.release.core-os.net/pkgs/amd64-usr/docker/fb608f.../docker:17.06.torcx.tgz"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

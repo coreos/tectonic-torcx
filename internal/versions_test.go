@@ -32,7 +32,7 @@ versions:
         docker: [ "1.13", "1.12"]
 `
 
-	m, err := parseManifest([]byte(manifestData))
+	m, err := parseVersionManifest([]byte(manifestData))
 	if err != nil {
 		t.Fatal(err)
 	}

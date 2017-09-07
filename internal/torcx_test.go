@@ -18,29 +18,20 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestFilterOsVersions(t *testing.T) {
-	osv := []string{"1437.0.0", "1451.0.2", "1451.2.0", "1492.4.0"}
-
-	expected := []string{"1451.2.0", "1492.4.0"}
-	actual := FilterOsVersions("1451.2.0", osv)
-
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("expected versions %q, got %q", expected, actual)
-	}
-}
-
 func TestTorcxGC(t *testing.T) {
+	assert := assert.New(t)
 	storeDir, err := ioutil.TempDir("", ".torcx-test")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(storeDir)
 
-	dirs := []string{"v0", "v1", "v2", "v3"}
+	dirs := []string{"101.0.0", "102.0.0", "102.0.1", "102.1.1", "xtra"}
 	for _, d := range dirs {
 		if err := os.Mkdir(filepath.Join(storeDir, d), 0755); err != nil {
 			t.Fatal(err)
@@ -56,19 +47,13 @@ func TestTorcxGC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	OSVersions := []string{"v2", "v3"}
 
-	err = a.TorcxGC(OSVersions)
-	if err != nil {
-		t.Fatal(err)
-	}
+	err = a.TorcxGC("102.0.1")
+	assert.Nil(err)
 
-	expected := []string{"a", "v2/", "v3/"}
+	expected := []string{"102.0.1/", "102.1.1/", "a", "xtra/"}
 	actual := listDir(t, storeDir)
-
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("Expected store dir of %q, got %q", expected, actual)
-	}
+	assert.Equal(expected, actual)
 }
 
 func touch(t *testing.T, path string) {

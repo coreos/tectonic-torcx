@@ -39,6 +39,7 @@ func bootstrapInit() {
 	// We configure the bootstrap systemd unit to only start if this file doesn't exist
 	BootstrapCmd.Flags().StringVar(&cfg.KubeletEnvPath, "kubelet-env-path", "/etc/kubernetes/kubelet.env", "path to write kube.version file")
 	BootstrapCmd.Flags().BoolVar(&cfg.OSUpgrade, "upgrade-os", true, "trigger an OS upgrade on bootstrap")
+	BootstrapCmd.Flags().BoolVar(&cfg.SkipTorcxSetup, "torcx-skip-setup", false, "skip torcx addons fetching and profile setup")
 }
 
 func runBootstrap(cmd *cobra.Command, args []string) error {

@@ -32,44 +32,35 @@ var statusCh chan updateengine.Status
 const (
 	// OsReleaseFile contains the default path to the os-release file
 	OsReleaseFile = "/usr/lib/os-release"
-	// UpdateConfPath contains the default path to the update.conf file
-	UpdateConfPath = "/etc/coreos/update.conf"
 )
 
-// GetCurrentOSChannel reads the current channel from node `/etc/coreos/update.conf`
-func GetCurrentOSChannel() (string, error) {
-	key := "GROUP"
-	vars, err := readEnvFile(UpdateConfPath)
-	if err != nil {
-		return "", errors.Wrapf(err, "error reading %q", UpdateConfPath)
-	}
-	osChannel, ok := vars[key]
-	if !ok || osChannel == "" {
-		return "", errors.New("unable to detect OS channel")
-	}
-	return osChannel, nil
-}
-
-// GetCurrentOSVersion adds the current OS version to the OSVersions list
-func GetCurrentOSVersion() (string, error) {
-	logrus.Debug("reading current OS version from " + OsReleaseFile)
+// GetCurrentOSInfo gets the current OS version and the board
+func GetCurrentOSInfo() (string, string, error) {
+	logrus.Debug("reading current OS version + board from " + OsReleaseFile)
 	osr, err := ioutil.ReadFile(OsReleaseFile)
 	if err != nil {
-		return "", errors.Wrap(err, "could not read os-release file")
+		return "", "", errors.Wrap(err, "could not read os-release file")
 	}
 
-	version := parseOSVersion(string(osr))
+	version := parseOSRelease(string(osr), "VERSION")
 	if version == "" {
-		return "", errors.New("invalid os-release file")
+		return "", "", errors.New("invalid os-release file")
 	}
-	return version, nil
+	board := parseOSRelease(string(osr), "COREOS_BOARD")
+	if board == "" {
+		return "", "", errors.New("invalid os-release file")
+	}
+
+	return version, board, nil
 }
 
-func parseOSVersion(releaseInfo string) string {
+func parseOSRelease(releaseInfo, key string) string {
 	lines := strings.Split(releaseInfo, "\n")
 	for _, line := range lines {
-		if strings.HasPrefix(line, "VERSION=") {
-			return strings.SplitN(line, "=", 2)[1]
+		if strings.HasPrefix(line, key+"=") {
+			val := strings.SplitN(line, "=", 2)[1]
+			val = strings.Trim(val, "\"")
+			return val
 		}
 	}
 	return ""
@@ -178,6 +169,7 @@ loop:
 
 		case updateengine.UpdateStatusIdle:
 			// already up to date, no reboot needed
+			logrus.Info("No update available")
 			break loop
 
 		case updateengine.UpdateStatusReportingErrorEvent:

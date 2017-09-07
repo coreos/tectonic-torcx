@@ -14,9 +14,14 @@
 
 package internal
 
-import "testing"
+import (
+	"testing"
 
-func TestParseOSVersion(t *testing.T) {
+	"github.com/stretchr/testify/assert"
+)
+
+func TestParseOSRelease(t *testing.T) {
+	assert := assert.New(t)
 	inp := `NAME="Container Linux by CoreOS"
 ID=coreos
 VERSION=1465.0.0
@@ -28,10 +33,6 @@ HOME_URL="https://coreos.com/"
 BUG_REPORT_URL="https://issues.coreos.com"
 COREOS_BOARD="amd64-usr"`
 
-	vers := parseOSVersion(inp)
-	expected := "1465.0.0"
-
-	if vers != expected {
-		t.Fatalf("parseOSVersion expected %q, got %q", expected, vers)
-	}
+	assert.Equal("1465.0.0", parseOSRelease(inp, "VERSION"))
+	assert.Equal("amd64-usr", parseOSRelease(inp, "COREOS_BOARD"))
 }

@@ -26,7 +26,8 @@ import (
 type App struct {
 	Conf Config
 
-	OSChannel string
+	// The CL "board"
+	Board string
 
 	CurrentOSVersion string
 	NextOSVersion    string
@@ -40,14 +41,16 @@ type App struct {
 	DockerRequiresReboot bool
 	// Whether a node reboot is required to finalize an OS upgrade.
 	OSRequiresReboot bool
+
+	packageManifestCache map[string]*PackageManifest
 }
 
 type Config struct {
 	// Path to the torcx binary
 	TorcxBin string
 
-	// Templated URL to torcx store
-	TorcxStoreURL *template.Template
+	// Templated URL to torcx package manifest
+	TorcxManifestURL *template.Template
 
 	// The torcx profile name to create (if no others exist)
 	ProfileName string
@@ -60,9 +63,6 @@ type Config struct {
 
 	// Don't use the apiserver to determine k8s version, just use this
 	ForceKubeVersion string
-
-	// Don't use node configuration to determine OS channel, just use this
-	ForceOSChannel string
 
 	// If true, do an OS upgrade before proceeding
 	OSUpgrade bool
@@ -85,6 +85,9 @@ type Config struct {
 
 	// The path to the version manifest
 	VersionManifestPath string
+
+	// Whether to skip torcx setup entirely
+	SkipTorcxSetup bool
 }
 
 func NewApp(c Config) (*App, error) {
@@ -93,7 +96,8 @@ func NewApp(c Config) (*App, error) {
 	}
 
 	a := App{
-		Conf: c,
+		Conf:                 c,
+		packageManifestCache: map[string]*PackageManifest{},
 	}
 
 	// Test that torcx exists
@@ -109,31 +113,23 @@ func NewApp(c Config) (*App, error) {
 func (a *App) GatherState() error {
 	var err error
 
-	a.CurrentOSVersion, err = GetCurrentOSVersion()
+	a.CurrentOSVersion, a.Board, err = GetCurrentOSInfo()
 	if err != nil {
 		return err
 	}
-
-	if a.Conf.ForceOSChannel != "" {
-		a.OSChannel = a.Conf.ForceOSChannel
-	} else {
-		a.OSChannel, err = GetCurrentOSChannel()
-		if err != nil {
-			return err
-		}
-	}
+	logrus.Infof("Current OS version is %s, board is %s", a.CurrentOSVersion, a.Board)
 
 	a.K8sVersion, err = a.GetKubeVersion()
 	if err != nil {
 		return err
 	}
-	logrus.Infof("running on Kubernetes version %q", a.K8sVersion)
+	logrus.Infof("Detected Kubernetes version %q", a.K8sVersion)
 
 	a.DockerVersions, err = a.VersionFor("docker", a.K8sVersion)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("want docker versions %v", a.DockerVersions)
+	logrus.Infof("Kubernetes needs Docker version(s) %v", a.DockerVersions)
 
 	return nil
 }
@@ -164,18 +160,18 @@ func (a *App) Bootstrap() error {
 		}
 	}
 
-	osVersions := []string{}
-	if a.CurrentOSVersion != "" {
-		osVersions = append(osVersions, a.CurrentOSVersion)
-	}
-	if a.NextOSVersion != "" {
-		osVersions = append(osVersions, a.NextOSVersion)
-	}
-
-	// TODO(cdc) When we have the list of available packages for an OS version,
-	// pick the best one.
-	if err := a.InstallAddon("docker", a.DockerVersions[0], a.OSChannel, osVersions, MinimumRemoteDocker); err != nil {
-		return err
+	if a.Conf.SkipTorcxSetup {
+		logrus.Warnf("Skipping torcx setup!")
+	} else {
+		dockerVersion, osVersions, err := a.PickVersion("docker", a.DockerVersions)
+		if err != nil {
+			return err
+		}
+		if len(osVersions) > 0 {
+			if err := a.InstallAddon("docker", dockerVersion, osVersions); err != nil {
+				return err
+			}
+		}
 	}
 
 	if a.Conf.KubeletEnvPath != "" {
@@ -221,21 +217,22 @@ func (a *App) UpdateHook() error {
 		return err
 	}
 
-	osVersions := []string{}
-	if a.CurrentOSVersion != "" {
-		osVersions = append(osVersions, a.CurrentOSVersion)
-	}
-	if a.NextOSVersion != "" {
-		osVersions = append(osVersions, a.NextOSVersion)
-	}
-
-	err := a.InstallAddon("docker", a.DockerVersions[0], a.OSChannel, osVersions, MinimumRemoteDocker)
+	dockerVersion, osVersions, err := a.PickVersion("docker", a.DockerVersions)
 	if err != nil {
 		return err
 	}
+	if len(osVersions) > 0 {
+		if err := a.InstallAddon("docker", dockerVersion, osVersions); err != nil {
+			return err
+		}
+	}
+
+	if err := a.TorcxGC(a.CurrentOSVersion); err != nil {
+		logrus.Warn("Failed to GC old torcx stores: ", err)
+	}
 
 	if a.Conf.WriteNodeAnnotation != "" {
-		err = a.WriteNodeAnnotation()
+		err := a.WriteNodeAnnotation()
 		if err != nil {
 			return err
 		}
