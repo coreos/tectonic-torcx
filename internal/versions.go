@@ -74,7 +74,7 @@ func (m *VersionManifest) VersionFor(haveName, haveVersion, wantName string) ([]
 }
 
 // Parse and quickly validate the yaml version manifest
-func parseManifest(data []byte) (*VersionManifest, error) {
+func parseVersionManifest(data []byte) (*VersionManifest, error) {
 	m := VersionManifest{}
 	err := yaml.Unmarshal(data, &m)
 	if err != nil {
@@ -95,5 +95,5 @@ func (a *App) GetVersionManifest() (*VersionManifest, error) {
 		return nil, errors.Wrap(err, "Failed to read version manifest")
 	}
 
-	return parseManifest(data)
+	return parseVersionManifest(data)
 }

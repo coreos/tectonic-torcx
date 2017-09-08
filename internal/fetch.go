@@ -15,94 +15,66 @@
 package internal
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"runtime"
+	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/openpgp"
-	"text/template"
 )
-
-const (
-	// StoreTemplate is the URL template for the default ContainerLinux torcx store
-	StoreTemplate = "https://{{.OSChannel}}.release.core-os.net/{{.OSArch}}-usr/{{.OSVersion}}/torcx/{{.AddonName}}:{{.AddonReference}}.torcx.tgz"
-)
-
-// urlParams contains required parameters for store URL rendering
-type urlParams struct {
-	OSChannel      string
-	OSArch         string
-	OSVersion      string
-	AddonName      string
-	AddonReference string
-}
 
 // FetchAddon fetches and verifies a torcx addon. It returns
 // the path to the downloaded file if successful, or error
-func (a *App) FetchAddon(name, reference, osChannel, osVersion string) (string, error) {
-	logrus.Infof("fetching addon %s:%s (%s)", name, reference, osVersion)
+func (a *App) FetchAddon(loc *Location) (string, error) {
+	if existing := a.tryFindExisting(loc.Version); existing != "" {
+		logrus.Infof("Found identical package at %s, skipping download", existing)
+		return existing, nil
+	}
 
-	tmpfile, err := ioutil.TempFile("", name+":"+reference)
+	logrus.Infof("fetching addon at %s", loc.URL)
+	tmpfile, err := ioutil.TempFile("", loc.Version.filename())
 	if err != nil {
 		return "", errors.Wrapf(err, "could not create temporary addon")
 	}
 	defer tmpfile.Close()
 
-	params := urlParams{
-		OSChannel:      osChannel,
-		OSVersion:      osVersion,
-		OSArch:         runtime.GOARCH,
-		AddonName:      name,
-		AddonReference: reference,
-	}
-	url, err := urlFor(a.Conf.TorcxStoreURL, params)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get addon URL")
-	}
-	logrus.Debugf("GET %s > %s", url, tmpfile.Name())
+	logrus.Debugf("GET %s > %s", loc.URL, tmpfile.Name())
 
-	err = fetchURL(url, tmpfile)
+	err = fetchURL(loc.URL, tmpfile)
 	if err != nil {
 		os.Remove(tmpfile.Name())
 		return "", errors.Wrapf(err, "failed to fetch addon")
 	}
 
-	if !a.Conf.NoVerifySig {
-		logrus.Debug("download complete, verifying...")
-		if err := a.verify(url, tmpfile.Name()); err != nil {
-			return "", errors.Wrapf(err, "gpg validation failed")
-		}
-	} else {
-		logrus.Warn("Signature verification disabled! Skipping")
+	if err := tmpfile.Sync(); err != nil {
+		os.Remove(tmpfile.Name())
+		return "", errors.Wrapf(err, "failed to write addon")
+	}
+
+	// Seek the fp back to 0 and validate the downloaded file
+	if _, err := tmpfile.Seek(0, 0); err != nil {
+		os.Remove(tmpfile.Name())
+		return "", errors.Wrapf(err, "failed to seek tmpfile")
+	}
+	ok, err := loc.Version.ValidateHash(tmpfile)
+	if err != nil {
+		os.Remove(tmpfile.Name())
+		return "", errors.Wrapf(err, "failure during download hash validation")
+	}
+	if !ok {
+		os.Remove(tmpfile.Name())
+		return "", errors.New("Signature validation failed")
 	}
 
 	return tmpfile.Name(), nil
 }
 
-func urlFor(urlTemplate *template.Template, params urlParams) (string, error) {
-	if urlTemplate == nil {
-		return "", errors.New("missing URL template")
-	}
-	if params.OSChannel == "" || params.OSVersion == "" || params.OSArch == "" || params.AddonName == "" || params.AddonReference == "" {
-		return "", errors.Errorf("missing URL parameter, got %#v", params)
-	}
-
-	var target bytes.Buffer
-	if err := urlTemplate.Execute(&target, params); err != nil {
-		return "", errors.Wrap(err, "failed to render URL template")
-	}
-
-	return target.String(), nil
-}
-
 // fetchURL fetches a URL to a given destination
-func fetchURL(url string, dst io.WriteCloser) error {
+func fetchURL(url string, dst io.Writer) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -116,33 +88,16 @@ func fetchURL(url string, dst io.WriteCloser) error {
 	if err != nil {
 		return err
 	}
-
-	return dst.Close()
+	return nil
 }
 
 // verify will make sure a downloaded addon is signed by a key in the keyring.
-// It assumes the signature is available at "$url.aci", and tries
-// to fetch that
-func (a *App) verify(url string, path string) error {
-	if url == "" || path == "" {
-		return fmt.Errorf("Invalid parameters")
+// It assumes the signature is available at "$url.asc".
+func (a *App) gpgVerify(data, sig io.Reader) error {
+	if a.Conf.NoVerifySig {
+		logrus.Warn("signature verification disabled, skipping")
+		return nil
 	}
-
-	// Retrieve the signature
-	url = url + ".asc"
-	resp, err := http.Get(url)
-	if err != nil {
-		return errors.Wrap(err, "failed to request signature")
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("failed to request signature: %s %s", url, resp.Status)
-	}
-	sig, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to retrieve signature")
-	}
-	sigb := bytes.NewBuffer(sig)
 
 	// Get the keyring
 	keyring, err := a.openKeyring()
@@ -151,15 +106,8 @@ func (a *App) verify(url string, path string) error {
 	}
 	logrus.Debugf("Opened keyring with %d keys", len(keyring))
 
-	// Open the downloaded file
-	target, err := os.Open(path)
-	if err != nil {
-		return errors.Wrap(err, "failed to open addon")
-	}
-	defer target.Close()
-
 	// Validate
-	signer, err := openpgp.CheckArmoredDetachedSignature(keyring, target, sigb)
+	signer, err := openpgp.CheckArmoredDetachedSignature(keyring, data, sig)
 	if err != nil {
 		return errors.Wrap(err, "failed to validate signature")
 	}
@@ -179,4 +127,47 @@ func (a *App) openKeyring() (openpgp.EntityList, error) {
 	defer fp.Close()
 
 	return openpgp.ReadArmoredKeyRing(fp)
+}
+
+// findOnDisk is a simple shortcut that can find packages already downloaded.
+// Since we know the hash of the package we want, we can check to see if we
+// already have it. If the correct file is found, copy it to a temporary file.
+// Returns empty string if not found or an error occurred
+func (a *App) tryFindExisting(v *PackageVersion) string {
+	scan_dirs := []string{
+		"/usr/share/torcx/store",
+		a.Conf.torcxStoreDir,
+	}
+
+	wantName := v.filename()
+	foundPath := ""
+
+	for _, dir := range scan_dirs {
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+
+			if info.Name() != wantName {
+				return nil
+			}
+
+			fp, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+
+			ok, _ := v.ValidateHash(fp)
+			if ok {
+				foundPath = path
+				return filepath.SkipDir
+			}
+
+			return nil
+		})
+	}
+	return foundPath
 }

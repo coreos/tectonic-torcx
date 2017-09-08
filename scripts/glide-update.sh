@@ -20,4 +20,4 @@ if [ ! $(command -v glide-vc) ]; then
 fi
 
 glide update --strip-vendor
-glide-vc --only-code --no-tests --no-test-imports --use-lock-file
+glide-vc --only-code --no-tests --use-lock-file

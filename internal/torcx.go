@@ -22,6 +22,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/coreos/go-semver/semver"
@@ -29,9 +31,6 @@ import (
 )
 
 const TORCX_STORE = "/var/lib/torcx/store"
-
-// MinimumRemoteDocker is the first CL bucket with published docker addons
-const MinimumRemoteDocker = "1520.0.0"
 
 type profileList struct {
 	LowerProfileNames  []string `json:"lower_profile_names"`
@@ -55,59 +54,37 @@ type imageListBox struct {
 	Value []imageEntry `json:"value"`
 }
 
-// FilterOsVersions removes versions of Container Linux that don't use torcx.
-func FilterOsVersions(minVersion string, versions []string) []string {
-	out := []string{}
-
-	minVer, _ := semver.NewVersion(minVersion)
-	if minVer == nil {
-		return versions
-	}
-
-	for _, vers := range versions {
-		ver, err := semver.NewVersion(vers)
-		if err != nil {
-			logrus.Debugf("Couldn't parse CL version %s, skipping", vers)
-			continue
-		}
-
-		if ver.LessThan(*minVer) {
-			logrus.Debugf("CL version %s too old; skipping", vers)
-			continue
-		}
-
-		out = append(out, vers)
-	}
-
-	return out
-}
-
 // InstallAddon fetches, verify and store an addon image
-func (a *App) InstallAddon(name string, reference string, osChannel string, osVersions []string, minOsVersion string) error {
-	osVersions = FilterOsVersions(minOsVersion, osVersions)
-
-	l := len(osVersions)
-	if l == 0 {
-		// This is not an error condition - it means the package is provided
-		// by the OS directly.
-		logrus.Infof("Not installing %s:%s - no valid OS versions", name, reference)
-		return nil
-	}
-	logrus.Infof("Installing %s:%s for %d os versions", name, reference, l)
-
+func (a *App) InstallAddon(name string, reference string, osVersions []string) error {
+	logrus.Infof("Installing %s:%s for os versions %v", name, reference, osVersions)
 	for _, osVersion := range osVersions {
-		if !a.AddonInStore(name, reference, osVersion) {
-			path, err := a.FetchAddon(name, reference, osChannel, osVersion)
-			if err != nil {
-				return errors.Wrapf(err, "failed to fetch addon")
-			}
-
-			err = a.moveToStore(path, name, reference, osVersion)
-			if err != nil {
-				return errors.Wrapf(err, "copy to store failed")
-			}
-		} else {
+		if a.AddonInStore(name, reference, osVersion) {
 			logrus.Debugf("Skipping osVersion %s, already installed", osVersion)
+			continue
+		}
+
+		manif, err := a.GetPackageManifest(osVersion)
+		if err != nil {
+			return err // should not happen; it is already in cache
+		}
+
+		loc, err := manif.LocationFor(name, reference)
+		if err != nil {
+			return err // should not happen, strategy caught this case
+		}
+		if loc.Path != "" {
+			logrus.Debugf("Skipping osVersion %s, already in store", osVersion)
+			continue
+		}
+
+		path, err := a.FetchAddon(loc)
+		if err != nil {
+			return errors.Wrapf(err, "failed to fetch addon")
+		}
+
+		err = a.copyToStore(path, name, reference, osVersion)
+		if err != nil {
+			return errors.Wrapf(err, "copy to store failed")
 		}
 	}
 	logrus.Debugf("fetch phase complete, adding to profile")
@@ -117,12 +94,6 @@ func (a *App) InstallAddon(name string, reference string, osChannel string, osVe
 		return errors.Wrapf(err, "failed to enable addon")
 	}
 	a.DockerRequiresReboot = true
-
-	// GC
-	err = a.TorcxGC(osVersions)
-	if err != nil {
-		logrus.Error("failed to GC old torx stores (continuing): ", err)
-	}
 
 	return nil
 }
@@ -147,13 +118,17 @@ func (a *App) AddonInStore(name, reference, osVersion string) bool {
 	return false
 }
 
-// moveToStore moves an already downloaded addon to the store
-func (a *App) moveToStore(path, name, reference, osVersion string) error {
+// copyToStore moves an already downloaded addon to the store
+func (a *App) copyToStore(path, name, reference, osVersion string) error {
 	srcfd, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer srcfd.Close()
+
+	if strings.HasPrefix(path, "/tmp/") {
+		defer os.Remove(path)
+	}
 
 	var destPath string
 	if err := os.MkdirAll(filepath.Join(a.Conf.torcxStoreDir, osVersion), 0755); err != nil {
@@ -170,11 +145,12 @@ func (a *App) moveToStore(path, name, reference, osVersion string) error {
 		return nil
 	}
 	defer destfd.Close()
-	logrus.Debugf("rename %s %s", path, destPath)
+	logrus.Debugf("copying to store: src %s dst %s", path, destPath)
 
 	if _, err := io.Copy(destfd, srcfd); err != nil {
 		return err
 	}
+
 	return destfd.Sync()
 }
 
@@ -206,13 +182,15 @@ func (a *App) UseAddon(name string, reference string) error {
 }
 
 // TorcxGC removes versioned stores that we know we won't need.
-// As a safety mechanism, this won't do anything unless we are keeping at least
-// 2 OS versions.
-func (a *App) TorcxGC(osVersions []string) error {
-	if len(osVersions) < 2 {
-		logrus.Debug("Skipping TorcxGC; need at least 2 active OSVersions")
-		return nil
+// All versioned stores older than a given version are removed.
+func (a *App) TorcxGC(minOSVersion string) error {
+	minOSVers, err := semver.NewVersion(minOSVersion)
+	if err != nil {
+		return errors.Wrapf(err, "didn't understand minOSVersion")
 	}
+
+	// Only consider directories that look like CL versions
+	versionRE := regexp.MustCompile(`^\d+\.\d+\.\d+$`)
 
 	// List the user store
 	entries, err := ioutil.ReadDir(a.Conf.torcxStoreDir)
@@ -222,16 +200,22 @@ func (a *App) TorcxGC(osVersions []string) error {
 
 	// Each torcx store directory holds addons and os version sub-stores
 	// Remove all unwanted stores
-L:
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
-		for _, keep := range osVersions {
-			if entry.Name() == keep {
-				continue L
-			}
+		if !versionRE.MatchString(entry.Name()) {
+			continue
 		}
+
+		vers := semver.New(entry.Name())
+		if vers == nil {
+			continue
+		}
+		if !vers.LessThan(*minOSVers) {
+			continue
+		}
+
 		p := filepath.Join(a.Conf.torcxStoreDir, entry.Name())
 		logrus.Debugf("Removing unneeded torcx store directory %s", p)
 		if err := os.RemoveAll(p); err != nil {

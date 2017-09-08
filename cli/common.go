@@ -15,6 +15,7 @@
 package cli
 
 import (
+	_ "crypto/sha512" // for go-digest
 	"os/exec"
 	"text/template"
 
@@ -27,9 +28,9 @@ import (
 )
 
 var (
-	cfg               = internal.Config{}
-	verbose           string
-	flagTorcxStoreURL string
+	cfg                  = internal.Config{}
+	verbose              string
+	flagTorcxManifestURL string
 )
 
 // Init initializes the CLI environment for tectonic-torcx multicall
@@ -57,10 +58,9 @@ func commonFlags(f *pflag.FlagSet) {
 
 	f.StringVar(&cfg.Kubeconfig, "kubeconfig", "/etc/kubernetes/kubeconfig", "path to kubeconfig")
 	f.StringVar(&cfg.TorcxBin, "torcx-bin", tb, "path to torcx")
-	f.StringVar(&flagTorcxStoreURL, "torcx-store-url", internal.StoreTemplate, "URL (template) for torcx store")
+	f.StringVar(&flagTorcxManifestURL, "torcx-manifest-url", internal.ManifestURLTemplate, "URL (template) for torcx package manifest")
 	f.StringVar(&cfg.ProfileName, "torcx-profile", TectonicTorcxProfile, "torcx profile to create, if needed")
 	f.StringVar(&cfg.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
-	f.StringVar(&cfg.ForceOSChannel, "force-os-channel", "", "force a specific OS channel, rather than determining from the node configuration")
 	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
 	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
 	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "/versions.yaml", "path to the version manifest file")
@@ -89,15 +89,15 @@ func parseFlags() (internal.Config, error) {
 		return zero, errors.New("keyring path required")
 	}
 
-	if flagTorcxStoreURL == "" {
-		return zero, errors.New("empty store URL")
+	if flagTorcxManifestURL == "" {
+		flagTorcxManifestURL = internal.ManifestURLTemplate
 	}
 
-	tmpl, err := template.New("TorcxStoreURL").Parse(flagTorcxStoreURL)
+	tmpl, err := template.New("TorcxManifestURL").Parse(flagTorcxManifestURL)
 	if err != nil {
 		return zero, errors.Wrap(err, "error parsing URL template")
 	}
-	cfg.TorcxStoreURL = tmpl
+	cfg.TorcxManifestURL = tmpl
 
 	if cfg.VersionManifestPath == "" {
 		return zero, errors.New("version-manifest required")
