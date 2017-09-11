@@ -19,11 +19,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 
 	"github.com/coreos/container-linux-update-operator/pkg/k8sutil"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -101,7 +103,12 @@ func (a *App) versionFromAPIServer() (string, error) {
 		return "", errors.Wrap(err, "failed to build kube client")
 	}
 
-	version, err := client.ServerVersion()
+	var version *version.Info
+	err = retry(3, 10, func() error {
+		var e error
+		version, e = client.ServerVersion()
+		return e
+	})
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get server version")
 	}
@@ -169,10 +176,24 @@ func (a *App) WriteNodeAnnotation() error {
 		a.Conf.WriteNodeAnnotation: "true",
 	}
 
-	err = k8sutil.SetNodeAnnotations(node, a.Conf.NodeName, annotations)
+	err = retry(5, 60, func() error { return k8sutil.SetNodeAnnotations(node, a.Conf.NodeName, annotations) })
 	if err != nil {
 		return errors.Wrap(err, "unable to set node annotation")
 	}
 
 	return nil
+}
+
+// retry tries the supplied function until it doesn't error.
+// it will retry _tries_ times, pausing _pause_ seconds between retries
+func retry(tries, pause uint, f func() error) error {
+	var err error
+	for tries > 0 {
+		err = f()
+		if err == nil {
+			return nil
+		}
+		time.Sleep(time.Duration(pause) * time.Second)
+	}
+	return err
 }
