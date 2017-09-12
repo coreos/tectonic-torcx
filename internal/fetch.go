@@ -75,7 +75,13 @@ func (a *App) FetchAddon(loc *Location) (string, error) {
 
 // fetchURL fetches a URL to a given destination
 func fetchURL(url string, dst io.Writer) error {
-	resp, err := http.Get(url)
+	var resp *http.Response
+	var err error
+	err = retry(5, 60, func() error {
+		var e error
+		resp, e = http.Get(url)
+		return e
+	})
 	if err != nil {
 		return err
 	}
