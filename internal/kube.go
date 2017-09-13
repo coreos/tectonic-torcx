@@ -44,12 +44,13 @@ func (a *App) WriteKubeletEnv(destPath string, k8sVersion string) error {
 
 	flags, err := readEnvFile(installerEnvPath)
 	if err != nil {
-		return nil
+		return errors.Wrapf(err, "unable to read template environment file %s", installerEnvPath)
 	}
 
+	logrus.Infof("Writing kubelet.env file at %s", destPath)
 	dstFp, err := os.Create(destPath)
 	if err != nil {
-		return nil
+		return errors.Wrapf(err, "unable to create %s", destPath)
 	}
 	defer dstFp.Close()
 
