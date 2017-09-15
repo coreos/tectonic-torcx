@@ -23,7 +23,7 @@ import (
 )
 
 // MinimumRemoteDocker is the first CL bucket with published docker addons
-const MinimumRemoteDocker = "1520.2.0"
+const MinimumRemoteDocker = "1520.3.0"
 
 // This error is returned when there is no suitable package available to install.
 var NoVersionError = errors.New("No suitable version available")
