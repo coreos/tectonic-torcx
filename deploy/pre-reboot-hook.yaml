@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: container-linux-torcx-pre-hook
-  namespace: tectonic-system
+  namespace: kube-system
 spec:
   template:
     metadata:
@@ -21,7 +21,9 @@ spec:
         command:
         - "/tectonic-torcx-hook-pre"
         - "--verbose=debug"
-        - "--node-annotation=container-linux-update.v1.coreos.com/torcx-pre"
+          #- "--node-annotation=container-linux-update.v1.coreos.com/tectonic-torcx-pre-hook-ok"
+          # Add this annotation to the container-linux-update-operator configuration
+          # see: https://github.com/coreos/container-linux-update-operator/blob/master/doc/before-after-reboot-checks.md
         - "--sleep=604800" # sleep for a week after success; the operator will deschedule us
         volumeMounts:
           - mountPath: /usr/share
@@ -52,6 +54,8 @@ spec:
           - mountPath: /etc/ssl/certs/ca-certificates.crt
             name: ca-certificates
             readOnly: true
+          - mountPath: /tmp
+            name: tmp
         env:
         - name: NODE
           valueFrom:
@@ -91,3 +95,5 @@ spec:
       - name: ca-certificates
         hostPath:
           path: /usr/share/ca-certificates/ca-certificates.crt
+      - name: tmp
+        emptyDir: {}
