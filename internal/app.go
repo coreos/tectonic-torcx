@@ -101,9 +101,11 @@ func NewApp(c Config) (*App, error) {
 	}
 
 	// Test that torcx exists
-	err := a.torcxCmd(nil, []string{"help"})
-	if err != nil {
-		return nil, errors.Wrap(err, "could not execute torcx")
+	if !a.Conf.SkipTorcxSetup {
+		err := a.torcxCmd(nil, []string{"help"})
+		if err != nil {
+			return nil, errors.Wrap(err, "could not execute torcx")
+		}
 	}
 
 	return &a, nil
