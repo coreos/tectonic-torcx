@@ -193,6 +193,7 @@ func retry(tries, pause uint, f func() error) error {
 		if err == nil {
 			return nil
 		}
+		tries--
 		time.Sleep(time.Duration(pause) * time.Second)
 	}
 	return err
