@@ -166,6 +166,7 @@ func (a *App) UseAddon(name string, reference string) error {
 	// Add this addon to the profile
 	err = a.torcxCmd(nil, []string{
 		"profile", "use-image",
+		"--allow=missing",
 		"--name", profileName,
 		name + ":" + reference,
 	})
@@ -273,7 +274,7 @@ func (a *App) torcxCmd(result interface{}, args []string) error {
 	if err != nil {
 		switch e := err.(type) {
 		case *exec.ExitError:
-			logrus.Debugf("torcx edited with non-zero status code, stderr: %s", string(e.Stderr))
+			logrus.Debugf("torcx exited with non-zero status code, stderr: %s", string(e.Stderr))
 		}
 		return err
 	}
