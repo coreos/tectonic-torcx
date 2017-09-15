@@ -4,8 +4,8 @@ sudo: required
 language: go
 go_import_path: github.com/coreos/tectonic-torcx
 go:
-  - 1.8
-  - 1.9
+  - 1.8.x
+  - 1.9.x
 
 env:
   - >
