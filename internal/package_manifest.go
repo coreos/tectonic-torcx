@@ -29,7 +29,7 @@ import (
 
 const (
 	// StoreTemplate is the URL template for the default ContainerLinux torcx store
-	ManifestURLTemplate = "https://tectonic-torcx.release.core-os.net/{{.Board}}/{{.OSVersion}}/torcx_manifest.json"
+	ManifestURLTemplate = "https://tectonic-torcx.release.core-os.net/manifests/{{.Board}}/{{.OSVersion}}/torcx_manifest.json"
 
 	KIND_PACKAGE_MANIFEST = "torcx-package-list-v0"
 )
