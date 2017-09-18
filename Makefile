@@ -33,6 +33,10 @@ VERSION ?= $(shell git describe --tags --always --dirty)
 # Multicall binaries (symlink basenames).
 MULTICALLS := tectonic-torcx-bootstrap tectonic-torcx-hook-pre
 
+# The installer uses a mutable tag; tag all production
+# builds with that
+PRODTAG := installer-latest
+
 ###
 ### These variables should not need tweaking.
 ###
@@ -42,7 +46,15 @@ SRC_DIRS := cli internal pkg
 ALL_ARCH := amd64 arm64
 BASEIMAGE?=quay.io/coreos/torcx:v0.1.1
 
-IMAGE ?= $(REGISTRY)/$(BIN)-$(ARCH)
+# Image name ends with the -arch unless it's amd64
+ifeq ($(ARCH),amd64)
+	IMARCH?=""
+else
+	IMARCH?='-$(ARCH)'
+endif
+
+
+IMAGE ?= $(REGISTRY)/$(BIN)$(IMARCH)
 
 BUILD_IMAGE ?= golang:1.8-stretch
 
@@ -113,8 +125,22 @@ else
 endif
 	@docker images -q $(IMAGE):$(VERSION) > $@
 
-push-name:
+
+push-production:
+	@git describe --tags --exact-match > /dev/null # This will error if this is not a tagged commit
+ifneq (,$(findstring dirty,$(VERSION)))
+	@echo "working tree is dirty, quitting"
+	@exit 1
+endif
+
+	@docker tag $(IMAGE):$(VERSION) $(IMAGE):$(PRODTAG)
+	@docker push $(IMAGE):$(PRODTAG)
+	@echo "pushed: $(IMAGE):$(PRODTAG)"
+
+
+push-name: -
 	@echo "pushed: $(IMAGE):$(VERSION)"
+	@echo "You probably want to update the installer's tag with make push-production"
 
 version:
 	@echo $(VERSION)
