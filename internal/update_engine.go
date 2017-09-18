@@ -16,6 +16,7 @@ package internal
 
 import (
 	"io/ioutil"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -44,11 +45,16 @@ func GetCurrentOSInfo() (string, string, error) {
 
 	version := parseOSRelease(string(osr), "VERSION")
 	if version == "" {
-		return "", "", errors.New("invalid os-release file")
+		return "", "", errors.New("invalid os-release file, unable to determine VERSION")
 	}
 	board := parseOSRelease(string(osr), "COREOS_BOARD")
 	if board == "" {
-		return "", "", errors.New("invalid os-release file")
+		// Older releases did not expose `COREOS_BOARD` in `os-release`,
+		logrus.Warn("missing COREOS_BOARD field, trying to fallback")
+		board = coreosBoardFallback()
+	}
+	if board == "" {
+		return "", "", errors.New("invalid os-release file, unable to determine COREOS_BOARD")
 	}
 
 	return version, board, nil
@@ -64,6 +70,19 @@ func parseOSRelease(releaseInfo, key string) string {
 		}
 	}
 	return ""
+}
+
+// coreosBoardFallback provides a last chance fallback effort to determine
+// board name, hardcoded on runtime arch label.
+func coreosBoardFallback() string {
+	board := ""
+	switch arch := runtime.GOARCH; arch {
+	case "amd64":
+		board = "amd64-usr"
+	case "arm64":
+		board = "arm64-usr"
+	}
+	return board
 }
 
 // NextOSVersion gets the coming OS version from update_engine
