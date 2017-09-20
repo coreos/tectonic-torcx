@@ -56,6 +56,8 @@ spec:
             readOnly: true
           - mountPath: /tmp
             name: tmp
+          - mountPath: /dev/log
+            name: dev-log
         env:
         - name: NODE
           valueFrom:
@@ -97,3 +99,6 @@ spec:
           path: /usr/share/ca-certificates/ca-certificates.crt
       - name: tmp
         emptyDir: {}
+      - name: dev-log
+        hostPath:
+            path: /dev/log

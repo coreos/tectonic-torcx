@@ -64,6 +64,7 @@ docker run \
     -v /etc/coreos:/etc/coreos:ro \
     -v /etc/torcx:/etc/torcx \
     -v /etc/kubernetes:/etc/kubernetes \
+    -v /dev/log:/dev/log \
     quay.io/coreos/tectonic-torcx:latest-dev \
     --verbose=debug
 ```
