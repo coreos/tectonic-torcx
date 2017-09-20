@@ -19,8 +19,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/tectonic-torcx/internal"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 

@@ -17,9 +17,9 @@ package internal
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // MinimumRemoteDocker is the first CL bucket with published docker addons

@@ -25,9 +25,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const TORCX_STORE = "/var/lib/torcx/store"

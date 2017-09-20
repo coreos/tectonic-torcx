@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/coreos/container-linux-update-operator/pkg/k8sutil"
 	"k8s.io/apimachinery/pkg/version"
