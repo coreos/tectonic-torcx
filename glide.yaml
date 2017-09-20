@@ -1,4 +1,4 @@
-package: github.com/coreos/tectonic-torcx/internal
+package: github.com/coreos/tectonic-torcx
 import:
 - package: github.com/pkg/errors
   version: v0.8.0
@@ -8,8 +8,8 @@ import:
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - package: github.com/spf13/viper
   version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4 
-- package: github.com/Sirupsen/logrus
-  version: 0.11.4
+- package: github.com/sirupsen/logrus
+  version: v1.0.3
 - package: github.com/coreos/container-linux-update-operator
   version: v0.3.0
   subpackages:
