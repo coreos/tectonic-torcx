@@ -112,7 +112,7 @@ func NewApp(c Config) (*App, error) {
 }
 
 // GatherState collects the common system state - this has no side effects
-func (a *App) GatherState() error {
+func (a *App) GatherState(localOnly bool, envPath string) error {
 	var err error
 
 	a.CurrentOSVersion, a.Board, err = GetCurrentOSInfo()
@@ -121,7 +121,7 @@ func (a *App) GatherState() error {
 	}
 	logrus.Infof("Current OS version is %s, board is %s", a.CurrentOSVersion, a.Board)
 
-	a.K8sVersion, err = a.GetKubeVersion()
+	a.K8sVersion, err = a.GetKubeVersion(localOnly, envPath)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (a *App) Bootstrap() error {
 	}
 	defer dbusConn.Close()
 
-	if err := a.GatherState(); err != nil {
+	if err := a.GatherState(false, installerEnvPath); err != nil {
 		return err
 	}
 
@@ -211,7 +211,7 @@ func (a *App) Bootstrap() error {
 // - gc if possible
 // - write "hook successful" annotation
 func (a *App) UpdateHook() error {
-	if err := a.GatherState(); err != nil {
+	if err := a.GatherState(true, kubeletEnvPath); err != nil {
 		return err
 	}
 
