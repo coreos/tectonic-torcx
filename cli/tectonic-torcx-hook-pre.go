@@ -16,11 +16,13 @@ package cli
 
 import (
 	"errors"
+	"log/syslog"
 	"os"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/tectonic-torcx/internal"
+	"github.com/sirupsen/logrus"
+	logrus_syslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +45,12 @@ func hookPreInit() {
 }
 
 func runHookPre(cmd *cobra.Command, args []string) error {
+	// Tee log output to syslog; docker logs are not persisted across reboots
+	// by default, so this hook may be very difficult to debug
+	hook, err := logrus_syslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
+	if err == nil {
+		logrus.AddHook(hook)
+	}
 	conf, err := parseFlags()
 	if err != nil {
 		return err

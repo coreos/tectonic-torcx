@@ -20,8 +20,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/coreos/container-linux-update-operator/pkg/updateengine"
 )

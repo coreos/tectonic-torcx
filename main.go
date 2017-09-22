@@ -17,8 +17,8 @@ package main
 import (
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/tectonic-torcx/cli"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {

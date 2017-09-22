@@ -21,9 +21,9 @@ import (
 
 	"github.com/coreos/tectonic-torcx/internal"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/tectonic-torcx/pkg/multicall"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 

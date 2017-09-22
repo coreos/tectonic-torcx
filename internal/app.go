@@ -17,9 +17,9 @@ package internal
 import (
 	"text/template"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // App contains all the runtime state in a single, mutable place.
