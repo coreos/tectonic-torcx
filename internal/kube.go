@@ -33,6 +33,8 @@ import (
 const (
 	// installerEnvPath is the env file written by tectonic-installer
 	installerEnvPath = "/etc/kubernetes/installer/kubelet.env"
+	// kubeletEnvPath is the env file sourced by kubelet.service
+	kubeletEnvPath = "/etc/kubernetes/kubelet.env"
 	// envVersionKey is the key for the version flag
 	envVersionKey = "KUBELET_IMAGE_TAG"
 )
@@ -66,20 +68,26 @@ func (a *App) WriteKubeletEnv(destPath string, k8sVersion string) error {
 
 // GetKubeVersion retrieves kubernetes version querying several sources:
 //  1. a custom/forced version string
-//  2. GitVersion of the remote API-server `/version`
-//  3. hyperkube version (from its container tag)
-func (a *App) GetKubeVersion() (string, error) {
+//  2. GitVersion of the remote API-server `/version` (if localOnly is false)
+//  3. hyperkube version (container tag) from envPath
+func (a *App) GetKubeVersion(localOnly bool, envPath string) (string, error) {
 	if a.Conf.ForceKubeVersion != "" {
 		return a.Conf.ForceKubeVersion, nil
 	}
 
-	apiVersion, apiErr := a.versionFromAPIServer()
-	if apiErr == nil {
-		return apiVersion, nil
+	if !localOnly {
+		apiVersion, apiErr := a.versionFromAPIServer()
+		if apiErr == nil {
+			return apiVersion, nil
+		}
+		logrus.Warn("failed attempt to determine Kubernetes APIServer version: ", apiErr)
 	}
-	logrus.Warn("failed attempt to determine Kubernetes APIServer version: ", apiErr)
 
-	pathVersion, pathErr := versionFromPath(installerEnvPath, envVersionKey)
+	if envPath == "" {
+		return "", errors.New("no local file specified to determine cluster version")
+	}
+
+	pathVersion, pathErr := versionFromPath(envPath, envVersionKey)
 	if pathErr == nil {
 		logrus.Warn("Falling back to installer-provided kubernetes version")
 		// This accomodates for charset constraints in docker tags (for the hyperkube image)
