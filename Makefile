@@ -44,7 +44,7 @@ PRODTAG := installer-latest
 SRC_DIRS := cli internal pkg
 
 ALL_ARCH := amd64 arm64
-BASEIMAGE?=quay.io/coreos/torcx:v0.1.1
+BASEIMAGE?=quay.io/coreos/torcx:v0.1.2
 
 # Image name ends with the -arch unless it's amd64
 ifeq ($(ARCH),amd64)
