@@ -137,8 +137,7 @@ endif
 	@docker push $(IMAGE):$(PRODTAG)
 	@echo "pushed: $(IMAGE):$(PRODTAG)"
 
-
-push-name: -
+push-name:
 	@echo "pushed: $(IMAGE):$(VERSION)"
 	@echo "You probably want to update the installer's tag with make push-production"
 
