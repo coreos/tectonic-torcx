@@ -125,7 +125,7 @@ func (a *App) GatherState(localOnly bool, envPath string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Detected Kubernetes version %q", a.K8sVersion)
+	logrus.Infof("Detected Kubernetes version %s", a.K8sVersion)
 
 	a.DockerVersions, err = a.VersionFor("docker", a.K8sVersion)
 	if err != nil {

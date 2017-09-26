@@ -80,16 +80,16 @@ func (a *App) GetKubeVersion(localOnly bool, envPath string) (string, error) {
 		if apiErr == nil {
 			return apiVersion, nil
 		}
-		logrus.Warn("failed attempt to determine Kubernetes APIServer version: ", apiErr)
+		logrus.Warn("failed attempt to determine kubernetes api-server version: ", apiErr)
 	}
 
 	if envPath == "" {
-		return "", errors.New("no local file specified to determine cluster version")
+		return "", errors.New("no local file specified to determine kubernetes version")
 	}
 
 	pathVersion, pathErr := versionFromPath(envPath, envVersionKey)
 	if pathErr == nil {
-		logrus.Warn("Falling back to installer-provided kubernetes version")
+		logrus.Infof("using local file %s to determine kubernetes version", envPath)
 		// This accomodates for charset constraints in docker tags (for the hyperkube image)
 		version := strings.Replace(pathVersion, "_", "+", -1)
 		return version, nil
@@ -167,7 +167,7 @@ func readEnvFile(envPath string) (map[string]string, error) {
 // WriteNodeAnnotation writes the special annotation that indicates completion
 // of the tool.
 func (a *App) WriteNodeAnnotation() error {
-	logrus.Infof("Writing node annotation %q", a.Conf.WriteNodeAnnotation)
+	logrus.Infof("Writing node annotation %s", a.Conf.WriteNodeAnnotation)
 
 	config, err := clientcmd.BuildConfigFromFlags("", a.Conf.Kubeconfig)
 	if err != nil {
