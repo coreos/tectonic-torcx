@@ -63,12 +63,14 @@ func commonFlags(f *pflag.FlagSet) {
 	f.StringVar(&cfg.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
 	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
 	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
-	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "/versions.yaml", "path to the version manifest file")
+	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "", "path to the runtime-mappings manifest file")
 	f.StringVar(&verbose, "verbose", "info", "verbosity level")
 }
 
-// parseFlags parses CLI options, returning a populated configuration for the bootstrap agent
-func parseFlags() (internal.Config, error) {
+// parseFlags parses CLI options, returning a populated configuration for
+// the bootstrap agent. It takes the path to the version manifest containing runtime
+// mappings (consumed by hook logic and used as fallback by the bootstrapper).
+func parseFlags(defaultRuntimeMappingsPath string) (internal.Config, error) {
 	zero := internal.Config{}
 
 	lvl, err := logrus.ParseLevel(verbose)
@@ -100,7 +102,7 @@ func parseFlags() (internal.Config, error) {
 	cfg.TorcxManifestURL = tmpl
 
 	if cfg.VersionManifestPath == "" {
-		return zero, errors.New("version-manifest required")
+		cfg.VersionManifestPath = defaultRuntimeMappingsPath
 	}
 
 	return cfg, nil

@@ -43,7 +43,7 @@ func bootstrapInit() {
 }
 
 func runBootstrap(cmd *cobra.Command, args []string) error {
-	conf, err := parseFlags()
+	conf, err := parseFlags(internal.InstallerRuntimeMappings)
 	if err != nil {
 		return err
 	}
