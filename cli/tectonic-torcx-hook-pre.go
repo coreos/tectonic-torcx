@@ -51,7 +51,7 @@ func runHookPre(cmd *cobra.Command, args []string) error {
 	if err == nil {
 		logrus.AddHook(hook)
 	}
-	conf, err := parseFlags()
+	conf, err := parseFlags(internal.CluoRuntimeMappings)
 	if err != nil {
 		return err
 	}

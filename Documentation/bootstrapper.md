@@ -31,10 +31,8 @@ The bootstrapper tries to gather state from the cluster and from a [remote bucke
 This is the logic flow and the information sources it queries:
  1. Get cluster version from api-server `/version` endpoint
  1. Iff previous step permanently failed, use `/etc/kubernetes/installer/kubelet.env` to determine the install-time kubernetes version. 
- 1. Get needed addon (docker) versions from `/versions.yaml` hardcoded inside tectonic-torcx container
-    * FUTURE - after getting rid of in-container runtime mappings instead:
-    * Get runtime mappings from `tectonic-torcx-runtime-mappings` ConfigMap
-    * Iff previous step permanently failed, use `/etc/kubernetes/installer/runtime-mappings.yaml` to determine runtime mappings
+ 1. Get runtime mappings from `tectonic-torcx-runtime-mappings` ConfigMap
+ 1. Iff previous step permanently failed, use `/etc/kubernetes/installer/runtime-mappings.yaml` to determine runtime mappings
  1. Retrieve current OS version from `/usr/lib/os-release`
  1. Gather next OS version (if any) from `update_engine` via DBus
  1. Retrieve torcx remote manifests for both OS versions from a remote URL (see configuration notes above)

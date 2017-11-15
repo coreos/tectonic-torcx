@@ -33,10 +33,6 @@ VERSION ?= $(shell git describe --tags --always --dirty)
 # Multicall binaries (symlink basenames).
 MULTICALLS := tectonic-torcx-bootstrap tectonic-torcx-hook-pre
 
-# The installer uses a mutable tag; tag all production
-# builds with that
-PRODTAG := installer-latest
-
 ###
 ### These variables should not need tweaking.
 ###
@@ -126,20 +122,8 @@ endif
 	@docker images -q $(IMAGE):$(VERSION) > $@
 
 
-push-production:
-	@git describe --tags --exact-match > /dev/null # This will error if this is not a tagged commit
-ifneq (,$(findstring dirty,$(VERSION)))
-	@echo "working tree is dirty, quitting"
-	@exit 1
-endif
-
-	@docker tag $(IMAGE):$(VERSION) $(IMAGE):$(PRODTAG)
-	@docker push $(IMAGE):$(PRODTAG)
-	@echo "pushed: $(IMAGE):$(PRODTAG)"
-
 push-name:
 	@echo "pushed: $(IMAGE):$(VERSION)"
-	@echo "You probably want to update the installer's tag with make push-production"
 
 version:
 	@echo $(VERSION)

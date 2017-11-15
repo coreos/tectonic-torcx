@@ -3,5 +3,4 @@ FROM ARG_FROM
 MAINTAINER CoreOS Inc. <coreos-dev@googlegroups.com>
 
 ADD bin/docker-rootfs-ARG_ARCH.tgz        /
-ADD versions.yaml	/versions.yaml
 ADD app-signing-pubkey.gpg /pubring.gpg

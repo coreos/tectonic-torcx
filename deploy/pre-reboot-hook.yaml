@@ -58,6 +58,9 @@ spec:
             name: tmp
           - mountPath: /dev/log
             name: dev-log
+          - mountPath: /etc/runtime-mappings.yaml
+            name: runtime-mappings-cm
+            subPath: runtime-mappings.yaml
         env:
         - name: NODE
           valueFrom:
@@ -101,4 +104,7 @@ spec:
         emptyDir: {}
       - name: dev-log
         hostPath:
-            path: /dev/log
+          path: /dev/log
+      - name: runtime-mappings-cm
+        configMap:
+          name: tectonic-torcx-runtime-mappings
