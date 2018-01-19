@@ -96,7 +96,7 @@ func (a *App) GetPackageManifest(osVersion string) (*PackageManifest, error) {
 		logrus.Warn("signature verification disabled, skipping fetch phase")
 	} else {
 		if err := fetchURL(manifestURL+".asc", &manifestSigB); err != nil {
-			return nil, errors.Wrapf(err, "could not fetch manifest signature at %s.aci", manifestURL)
+			return nil, errors.Wrapf(err, "could not fetch manifest signature at %s.asc", manifestURL)
 		}
 		if err := a.gpgVerify(bytes.NewReader(manifestBuff.Bytes()), &manifestSigB); err != nil {
 			return nil, errors.Wrap(err, "gpg validation failed")
