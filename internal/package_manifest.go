@@ -91,16 +91,19 @@ func (a *App) GetPackageManifest(osVersion string) (*PackageManifest, error) {
 		return nil, errors.Wrapf(err, "could not fetch package manifest at %s", manifestURL)
 	}
 
-	if err := fetchURL(manifestURL+".asc", &manifestSigB); err != nil {
-		return nil, errors.Wrapf(err, "could not fetch manifest signature at %s.aci", manifestURL)
+	// Optionally, fetch and check the signature
+	if a.Conf.NoVerifySig {
+		logrus.Warn("signature verification disabled, skipping fetch phase")
+	} else {
+		if err := fetchURL(manifestURL+".asc", &manifestSigB); err != nil {
+			return nil, errors.Wrapf(err, "could not fetch manifest signature at %s.aci", manifestURL)
+		}
+		if err := a.gpgVerify(bytes.NewReader(manifestBuff.Bytes()), &manifestSigB); err != nil {
+			return nil, errors.Wrap(err, "gpg validation failed")
+		}
 	}
 
 	mb := manifestBuff.Bytes()
-
-	if err := a.gpgVerify(bytes.NewReader(mb), &manifestSigB); err != nil {
-		return nil, errors.Wrap(err, "gpg validation failed")
-	}
-
 	manifest, err := parseTorcxManifest(mb)
 	if err != nil {
 		return nil, err
