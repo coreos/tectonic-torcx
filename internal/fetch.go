@@ -67,7 +67,7 @@ func (a *App) FetchAddon(loc *Location) (string, error) {
 	}
 	if !ok {
 		os.Remove(tmpfile.Name())
-		return "", errors.New("Signature validation failed")
+		return "", errors.New("Hash validation failed")
 	}
 
 	return tmpfile.Name(), nil

@@ -61,7 +61,7 @@ func commonFlags(f *pflag.FlagSet) {
 	f.StringVar(&flagTorcxManifestURL, "torcx-manifest-url", internal.ManifestURLTemplate, "URL (template) for torcx package manifest")
 	f.StringVar(&cfg.ProfileName, "torcx-profile", TectonicTorcxProfile, "torcx profile to create, if needed")
 	f.StringVar(&cfg.ForceKubeVersion, "force-kube-version", "", "force a kubernetes version, rather than determining from the apiserver")
-	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify all downloaded addons")
+	f.BoolVar(&cfg.NoVerifySig, "no-verify-signatures", false, "don't gpg-verify remote assets")
 	f.StringVar(&cfg.GpgKeyringPath, "keyring", "/pubring.gpg", "path to the gpg keyring")
 	f.StringVar(&cfg.VersionManifestPath, "version-manifest", "", "path to the runtime-mappings manifest file")
 	f.StringVar(&verbose, "verbose", "info", "verbosity level")
