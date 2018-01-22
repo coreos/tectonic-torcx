@@ -43,9 +43,9 @@ func GetCurrentOSInfo() (string, string, error) {
 		return "", "", errors.Wrap(err, "could not read os-release file")
 	}
 
-	version := parseOSRelease(string(osr), "VERSION")
+	version := parseOSRelease(string(osr), "VERSION_ID")
 	if version == "" {
-		return "", "", errors.New("invalid os-release file, unable to determine VERSION")
+		return "", "", errors.New("invalid os-release file, unable to determine VERSION_ID")
 	}
 	board := parseOSRelease(string(osr), "COREOS_BOARD")
 	if board == "" {
