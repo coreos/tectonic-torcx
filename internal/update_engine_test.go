@@ -24,15 +24,15 @@ func TestParseOSRelease(t *testing.T) {
 	assert := assert.New(t)
 	inp := `NAME="Container Linux by CoreOS"
 ID=coreos
-VERSION=1465.0.0
-VERSION_ID=1465.0.0
-BUILD_ID=2017-07-06-0206
-PRETTY_NAME="Container Linux by CoreOS 1465.0.0 (Ladybug)"
+VERSION=1662.0.0+2018-01-19-1643
+VERSION_ID=1662.0.0
+BUILD_ID=2018-01-19-1643
+PRETTY_NAME="Container Linux by CoreOS 1662.0.0+2018-01-19-1643 (Ladybug)"
 ANSI_COLOR="38;5;75"
 HOME_URL="https://coreos.com/"
 BUG_REPORT_URL="https://issues.coreos.com"
 COREOS_BOARD="amd64-usr"`
 
-	assert.Equal("1465.0.0", parseOSRelease(inp, "VERSION"))
+	assert.Equal("1662.0.0", parseOSRelease(inp, "VERSION_ID"))
 	assert.Equal("amd64-usr", parseOSRelease(inp, "COREOS_BOARD"))
 }
