@@ -9,7 +9,9 @@ Requirements:
  * docker
 
 Environment:
- * `${NEWVER}`: new release version (e.g. `v2.1.0`)
+ * `export NEWVER='vX.Y.Z'` - this the new release version (e.g. `v2.1.0`)
+ * `unset IMAGE`
+ * `unset VERSION`
 
 Steps:
  1. Ensure you have a local clean checkout of current master branch:
@@ -27,7 +29,6 @@ Steps:
  1. Push all release artifacts:
     * `git push --tags`
     * make push
-    * make push-production
  1. Perform a release on github:
     * Go to <https://github.com/coreos/tectonic-torcx/releases> and add a new release.
     * Write a short summary of PRs and notable changes.
@@ -38,5 +39,5 @@ Steps:
 After each release, `tectonic-torcx` needs to be updated in downstream projects distributing it.
 
 These are all known relevant places:
- * `tectonic-cluo-operator`: version need to be bumped in manifest and a new release performed
- * `tectonic-installer`: this is automatically updated via the mutable `installer-latest` tag
+ * `tectonic-cluo-operator`: version needs to be bumped in manifest and a new release performed
+ * `tectonic-installer`: version needs to be bumped in `config.tf`
