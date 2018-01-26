@@ -76,7 +76,18 @@ func (a *App) GetKubeVersion(localOnly bool, envPath string) (string, error) {
 	}
 
 	if !localOnly {
-		apiVersion, apiErr := a.versionFromAPIServer()
+		logrus.Info("Querying kubernetes api-server for version")
+		config, err := clientcmd.BuildConfigFromFlags("", a.Conf.Kubeconfig)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to build kubeconfig")
+		}
+
+		client, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to build kube client")
+		}
+
+		apiVersion, apiErr := a.versionFromAPIServer(client)
 		if apiErr == nil {
 			return apiVersion, nil
 		}
@@ -100,20 +111,9 @@ func (a *App) GetKubeVersion(localOnly bool, envPath string) (string, error) {
 }
 
 // versionFromAPIServer connects to the APIServer and determines the kubernetes version
-func (a *App) versionFromAPIServer() (string, error) {
-	logrus.Info("Determining kubernetes version")
-	config, err := clientcmd.BuildConfigFromFlags("", a.Conf.Kubeconfig)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to build kubeconfig")
-	}
-
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to build kube client")
-	}
-
+func (a *App) versionFromAPIServer(client *kubernetes.Clientset) (string, error) {
 	var version *version.Info
-	err = retry(3, 10, func() error {
+	err := retry(3, 10, func() error {
 		var e error
 		version, e = client.ServerVersion()
 		return e
