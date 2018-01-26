@@ -229,8 +229,10 @@ func (a *App) UpdateHook() error {
 		}
 	}
 
-	if err := a.TorcxGC(a.CurrentOSVersion); err != nil {
-		logrus.Warn("Failed to GC old torcx stores: ", err)
+	if a.NextOSVersion != "" {
+		if err := a.TorcxGC(a.CurrentOSVersion); err != nil {
+			logrus.Warn("Failed to GC old torcx stores: ", err)
+		}
 	}
 
 	if a.Conf.WriteNodeAnnotation != "" {
